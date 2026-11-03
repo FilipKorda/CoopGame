@@ -184,8 +184,10 @@ namespace CoopGame
             if (!IsServer || aligned.Value) return;
             aligned.Value = true;
             alignedAt.Value = NetworkManager.ServerTime.Time;
-            if (baseHandle != null) baseHandle.ServerForceRelease();
-            if (holderHandle != null) holderHandle.ServerForceRelease();
+            if (baseHandle != null)
+                baseHandle.ServerForceRelease();
+            if (holderHandle != null)
+                holderHandle.ServerForceRelease();
         }
 
         /// <summary>Server: set the angles directly (tests).</summary>
