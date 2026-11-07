@@ -1,0 +1,130 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4915099593664148147
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6306023343374757774}
+  - component: {fileID: 322692094857237974}
+  - component: {fileID: 7634536266359312615}
+  - component: {fileID: 3671681557210556673}
+  - component: {fileID: 8461037047333729276}
+  m_Layer: 0
+  m_Name: GameSession
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6306023343374757774
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4915099593664148147}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &322692094857237974
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4915099593664148147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1236349900
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &7634536266359312615
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4915099593664148147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4c2b2fce69325647baefd37905c0edb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoopGame.PickupSystem
+  ShowTopMostFoldoutHeaderGroup: 1
+  scatterMinRadius: 0.6
+  scatterMaxRadius: 2.2
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  magnetRadius: 3.5
+  pickupDelay: 0.35
+  playerCenterHeight: 1
+  boltMaterial: {fileID: 2100000, guid: 7e5b0e346d9885a4e83cc2db2f12610c, type: 2}
+  healthMaterial: {fileID: 2100000, guid: a855eaff105b06d41929402169cdac21, type: 2}
+--- !u!114 &3671681557210556673
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4915099593664148147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9090f9b2429461d4ca5363e16f9f57f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoopGame.SceneFlow
+  ShowTopMostFoldoutHeaderGroup: 1
+  fadeTime: 0.35
+  holdBlack: 0.15
+  interludes:
+  - {fileID: 11400000, guid: 331492c9d11c392498b5a0dcfb349398, type: 2}
+  - {fileID: 11400000, guid: 897a2c809d2095244b5ec45d1fb703cc, type: 2}
+  - {fileID: 11400000, guid: 4821dc24277510e49bd83440db650124, type: 2}
+  - {fileID: 11400000, guid: eaed52bac65b02e46b0540f65b59d3d0, type: 2}
+  - {fileID: 11400000, guid: 6eec5dd4896b12c41a4dcaa9e8d65a39, type: 2}
+  - {fileID: 11400000, guid: 52c8216f691c97b4587f730af00adb6e, type: 2}
+  - {fileID: 11400000, guid: 65ef4889ec481d54fb8d87e43377c254, type: 2}
+  lineFade: 0.6
+  testInterlude: {fileID: 0}
+--- !u!114 &8461037047333729276
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4915099593664148147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 505c47abed5644345af6a4f58b974816, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoopGame.CutsceneSystem
+  ShowTopMostFoldoutHeaderGroup: 1
+  startLead: 0.3
+  readyTimeout: 15
+  leaveTimeout: 20
+  letterboxSize: 0.11
+  letterboxSpeed: 2.5
