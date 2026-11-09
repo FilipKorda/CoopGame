@@ -279,6 +279,7 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 148d6570d1ecc574cb9cc979796d8a3c, type: 2}
   - {fileID: 2100000, guid: 5d827679e3b99054db088ce8490ce0e9, type: 2}
+  - {fileID: 2100000, guid: cd6a0cff424b6524c9df8a83b52b5aae, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -418,7 +419,7 @@ Transform:
   m_GameObject: {fileID: 472259756151044762}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.36470583, z: 0}
+  m_LocalPosition: {x: 0, y: -0.3711054, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1837,7 +1838,7 @@ Transform:
   m_GameObject: {fileID: 1786923801887488958}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: -0.030538514, w: 0.9995336}
-  m_LocalPosition: {x: -0.165, y: -0.041176517, z: 0}
+  m_LocalPosition: {x: -0.14681837, y: -0.11310011, z: 0.023281425}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2230,7 +2231,7 @@ Transform:
   m_GameObject: {fileID: 1940337583141440809}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.36470583, z: 0}
+  m_LocalPosition: {x: 0, y: -0.3711054, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2268,6 +2269,7 @@ GameObject:
   - component: {fileID: 1248978116592686155}
   - component: {fileID: 299977977917658030}
   - component: {fileID: 8426302167714854836}
+  - component: {fileID: 7263131735471554571}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -2402,7 +2404,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CoopGame.PlayerMovement
   ShowTopMostFoldoutHeaderGroup: 1
-  moveSpeed: 9
+  moveSpeed: 7
   crouchSpeed: 4
   groundAcceleration: 60
   groundDeceleration: 70
@@ -2429,7 +2431,7 @@ MonoBehaviour:
   grabBehindTolerance: 0.25
   grabMaxRiseSpeed: 2
   ledgeEndMargin: 0.3
-  shimmySpeed: 2.5
+  shimmySpeed: 1.4
   hangSnapSharpness: 15
   hangJumpHeight: 2.6
   climbAssistSpeed: 2.5
@@ -2901,6 +2903,112 @@ MonoBehaviour:
   muzzle: {fileID: 2921747170126777719}
   ballMaterial: {fileID: 2100000, guid: e08981584876ac043b2e9fea12bcc0fb, type: 2}
   previewMaterial: {fileID: 2100000, guid: d27e6eb5f5e33ec45b25a7b300d43a16, type: 2}
+--- !u!114 &7263131735471554571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064001143260518296}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30b261de19ff7c54fb6e86edb5d53f42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoopGame.PlayerBody
+  ShowTopMostFoldoutHeaderGroup: 1
+  rig: {fileID: 1513616745402659041}
+  parts:
+  - {fileID: 3455474613285456437}
+  - {fileID: 2822115466587721130}
+  - {fileID: 1422632935988435299}
+  - {fileID: 2114227492002032347}
+  - {fileID: 3783399968601651985}
+  - {fileID: 4881015702924522916}
+  - {fileID: 2715453681269055355}
+  - {fileID: 4530716031013977738}
+  - {fileID: 2465007796447977871}
+  - {fileID: 7106913970037941447}
+  - {fileID: 2706525911489224810}
+  - {fileID: 6049080945218903638}
+  - {fileID: 8887324983612832411}
+  - {fileID: 781181298706836987}
+  - {fileID: 2767683863598360613}
+  joints:
+  - {fileID: 5367074716070053458}
+  - {fileID: 2154994219239662723}
+  - {fileID: 7146404136833502739}
+  - {fileID: 8483371553749107337}
+  - {fileID: 4671723895279928440}
+  - {fileID: 5399644862655121950}
+  - {fileID: 5909225628691786626}
+  - {fileID: 3739789018718280009}
+  - {fileID: 4418063399342907029}
+  - {fileID: 5773987730538690072}
+  - {fileID: 6637914614357875304}
+  - {fileID: 6015440107577560437}
+  backMount: {fileID: 2598553480242078733}
+  variants:
+  - name: Female
+    meshes:
+    - {fileID: 4300000, guid: a8c1400293d19904d87c2a3c439201be, type: 2}
+    - {fileID: 4300000, guid: 93e638ede976546458dd7a581f455e2a, type: 2}
+    - {fileID: 4300000, guid: ffb6fed4f11a775409c87c2cd5fc17ae, type: 2}
+    - {fileID: 4300000, guid: 0af18feb1bfb293489363b35acd46826, type: 2}
+    - {fileID: 4300000, guid: d58c7304fea722e45a8b70db4dc44a19, type: 2}
+    - {fileID: 4300000, guid: 20ba5fbdeaf623845baf507bea8a2dd0, type: 2}
+    - {fileID: 4300000, guid: d1fe4959034b61347adf3f267dc5212f, type: 2}
+    - {fileID: 4300000, guid: b61ff4956aea81d4b9f0f6c33cef7fc2, type: 2}
+    - {fileID: 4300000, guid: be3986171b31e20458c6684a1fb7db49, type: 2}
+    - {fileID: 4300000, guid: 140b27e5ad19691449bf8aa370aeef1e, type: 2}
+    - {fileID: 4300000, guid: b41f2e55e8d5fc042bf75ffe463db9b3, type: 2}
+    - {fileID: 4300000, guid: bab9a286b515f6f4c87a19ffc45f028d, type: 2}
+    - {fileID: 4300000, guid: 2b78e22500fc16f439263a3723a37a2f, type: 2}
+    - {fileID: 4300000, guid: 099a15a568a6053458fe3feb9fd70993, type: 2}
+    - {fileID: 4300000, guid: b4892e042edbc3248b4e6be544c3591d, type: 2}
+    jointPositions:
+    - {x: 0, y: 1.0911089, z: 0}
+    - {x: 0, y: 1.2211274, z: 0}
+    - {x: -0.16005309, y: -0.10490537, z: 0.0032988489}
+    - {x: 0, y: -0.36333343, z: 0}
+    - {x: 0, y: -0.48060003, z: 0}
+    - {x: 0.16005309, y: -0.10490537, z: 0.0032988489}
+    - {x: 0, y: -0.36333343, z: 0}
+    - {x: 0, y: -0.48060003, z: 0}
+    - {x: -0.25837618, y: 0.43373346, z: 0.0039943755}
+    - {x: 0, y: -0.3228, z: 0}
+    - {x: 0.25837618, y: 0.43373346, z: 0.0039943755}
+    - {x: 0, y: -0.3228, z: 0}
+    restHips: {x: 0, y: 1.0911089, z: 0}
+    restUpperBody: {x: 0, y: 1.2211274, z: 0}
+    gripOffset: {x: 0, y: -0.32305664, z: 0.006}
+    hangLower: 0.1268609
+    backMount: {x: 0, y: 1.5018609, z: -0.11958344}
+    ownGait: 1
+    gait:
+      stepLength: 2.4
+      fullSwingSpeed: 8
+      swingBuildUp: 12
+      hipSwing: 34
+      kneeBend: 55
+      shoulderSwing: 26
+      elbowRest: 12
+      elbowWalk: 30
+      armSpread: 10
+      legSpread: 7
+      bob: 0.035
+      walkLean: 6
+      torsoLean: 4
+      hipTwist: 0
+      hipDrop: 0
+      torsoTwist: 7
+      torsoRoll: 3
+      torsoShift: 0
+      headSteady: 0.8
+      stepImpact: 0
+      impactKnee: 0
+      impactNod: 0
+      walkKneeFlex: 0
+      smoothing: 10
 --- !u!1 &2195780077016763332
 GameObject:
   m_ObjectHideFlags: 0
@@ -3949,7 +4057,7 @@ Transform:
   m_GameObject: {fileID: 2940921715162348567}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: -0.06975647, w: 0.9975641}
-  m_LocalPosition: {x: -0.47, y: 0.482353, z: 0}
+  m_LocalPosition: {x: -0.29720095, y: 0.47000003, z: 0.029477626}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4342,7 +4450,7 @@ Transform:
   m_GameObject: {fileID: 3307030105011047152}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.117647, z: 0}
+  m_LocalPosition: {x: 0, y: 1.1500537, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -6081,7 +6189,7 @@ Transform:
   m_GameObject: {fileID: 5242139871177805017}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.0294118, z: 0}
+  m_LocalPosition: {x: 0, y: 1.0725536, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -6550,7 +6658,7 @@ Transform:
   m_GameObject: {fileID: 5909334889670830550}
   serializedVersion: 2
   m_LocalRotation: {x: -0.104528464, y: 0, z: 0, w: 0.9945219}
-  m_LocalPosition: {x: -0.0382353, y: -0.30294126, z: 0}
+  m_LocalPosition: {x: 0, y: -0.3353276, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -7340,7 +7448,7 @@ Transform:
   m_GameObject: {fileID: 6833748242558493755}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.482353, z: 0}
+  m_LocalPosition: {x: 0, y: -0.44560072, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -8055,7 +8163,7 @@ Transform:
   m_GameObject: {fileID: 7396806632613148445}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.06975647, w: 0.9975641}
-  m_LocalPosition: {x: 0.47, y: 0.482353, z: 0}
+  m_LocalPosition: {x: 0.29720095, y: 0.47000003, z: 0.029477626}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -8931,7 +9039,7 @@ Transform:
   m_GameObject: {fileID: 7878227282990198884}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.030538514, w: 0.9995336}
-  m_LocalPosition: {x: 0.165, y: -0.041176517, z: 0}
+  m_LocalPosition: {x: 0.14681837, y: -0.11310011, z: 0.023281425}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -9126,25 +9234,29 @@ MonoBehaviour:
   headParts:
   - {fileID: 4713176974527003032}
   - {fileID: 7873558137618623325}
-  stepLength: 2.4
+  stepLength: 2.8
   fullSwingSpeed: 8
-  swingBuildUp: 12
-  hipSwing: 34
-  kneeBend: 55
-  shoulderSwing: 26
-  elbowRest: 12
-  elbowWalk: 30
-  armSpread: 12
-  legSpread: 3.5
-  bob: 0.035
-  walkLean: 6
-  torsoLean: 4
+  swingBuildUp: 6
+  hipSwing: 26
+  kneeBend: 58
+  shoulderSwing: 14
+  elbowRest: 40
+  elbowWalk: 25
+  armSpread: 10
+  legSpread: 2
+  bob: 0.045
+  walkLean: 2
+  torsoLean: -2
   hipTwist: 0
   hipDrop: 0
-  torsoTwist: 7
+  torsoTwist: 5
   torsoRoll: 3
   torsoShift: 0
-  headSteady: 0.8
+  headSteady: 0.85
+  stepImpact: 0.008
+  impactKnee: 30
+  impactNod: 4
+  walkKneeFlex: 14
   useStance: 1
   stanceBlendTime: 0.25
   stanceDrop: 0.035
@@ -9208,12 +9320,12 @@ MonoBehaviour:
     elbowRight: 30
     torsoLean: 2
   hanging:
-    hipLeft: {x: -2, y: 0, z: -4}
-    kneeLeft: 60
-    ankleLeft: 20
-    hipRight: {x: 6, y: 0, z: 4}
-    kneeRight: 45
-    ankleRight: 25
+    hipLeft: {x: -6, y: 0, z: -3}
+    kneeLeft: 20
+    ankleLeft: 25
+    hipRight: {x: 4, y: 0, z: 3}
+    kneeRight: 32
+    ankleRight: 30
     shoulderLeft: {x: -150, y: 0, z: -8}
     elbowLeft: 10
     shoulderRight: {x: -150, y: 0, z: 8}
@@ -9221,16 +9333,23 @@ MonoBehaviour:
     torsoLean: 0
   hangHandHeight: 1.95
   hangHandReach: 0.55
-  hangHandSpacing: 0.28
-  hangCloser: 0.06
-  hangLower: 0.15
-  gripOffset: {x: 0, y: -0.36, z: 0.006}
+  hangHandSpacing: 0.26
+  hangCloser: 0.15
+  hangLower: 0.092053816
+  hangWallGap: 0.04
+  hangArmStretch: 0.96
+  hangGripOver: 0.04
+  gripOffset: {x: 0, y: -0.34936106, z: 0.006}
   gripAbove: 0
-  shimmyCycle: 0.8
-  shimmyHold: 0.6
-  shimmyLift: 0.07
-  shimmyLegTrail: 8
-  shimmyLegSway: 3
+  shimmyCycle: 0.9
+  shimmyHold: 0.62
+  shimmyLift: 0.045
+  shimmyLegTrail: 6
+  shimmyLegSway: 5
+  shimmyLegLag: 0.15
+  shimmySag: 0.035
+  shimmyShift: 0.05
+  shimmyBlend: 0.25
   zipHandHeight: 2.2
   zipHandSpacing: 0.12
   handTargetBlend: 0.3
@@ -9239,17 +9358,19 @@ MonoBehaviour:
   flipPivotHeight: 1
   flipTurnAfter: 540
   flipTuck:
-    hipLeft: {x: -100, y: 0, z: -6}
-    kneeLeft: 120
-    ankleLeft: 30
-    hipRight: {x: -95, y: 0, z: 6}
-    kneeRight: 115
-    ankleRight: 30
-    shoulderLeft: {x: -55, y: 0, z: -12}
-    elbowLeft: 75
-    shoulderRight: {x: -55, y: 0, z: 12}
-    elbowRight: 75
-    torsoLean: 25
+    hipLeft: {x: -140, y: 0, z: -4}
+    kneeLeft: 155
+    ankleLeft: 45
+    hipRight: {x: -137, y: 0, z: 4}
+    kneeRight: 153
+    ankleRight: 45
+    shoulderLeft: {x: -45, y: 0, z: 15}
+    elbowLeft: 120
+    shoulderRight: {x: -45, y: 0, z: -15}
+    elbowRight: 120
+    torsoLean: 55
+  flipTuckHold: 2.6
+  flipHeadTuck: 40
   useCartwheel: 1
   cartwheelSideways: 0.6
   cartwheel:
@@ -9280,10 +9401,10 @@ MonoBehaviour:
   landTime: 0.32
   landSoftSpeed: 5
   landHardSpeed: 16
-  smoothing: 10
+  smoothing: 7
   jumpSmoothing: 16
-  restHips: {x: 0, y: 1.0294118, z: 0}
-  restUpperBody: {x: 0, y: 1.117647, z: 0}
+  restHips: {x: 0, y: 1.0725536, z: 0}
+  restUpperBody: {x: 0, y: 1.1500537, z: 0}
 --- !u!1 &7974077389917223729
 GameObject:
   m_ObjectHideFlags: 0
@@ -9400,7 +9521,7 @@ Transform:
   m_GameObject: {fileID: 7990746717176780861}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.482353, z: 0}
+  m_LocalPosition: {x: 0, y: -0.44560072, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -9553,7 +9674,7 @@ Transform:
   m_GameObject: {fileID: 8600974801162499038}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.5, z: -0.27}
+  m_LocalPosition: {x: 0, y: 1.4670538, z: -0.16400005}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -9931,7 +10052,7 @@ Transform:
   m_GameObject: {fileID: 9023717116920737357}
   serializedVersion: 2
   m_LocalRotation: {x: -0.104528464, y: 0, z: 0, w: 0.9945219}
-  m_LocalPosition: {x: 0.0382353, y: -0.30294126, z: 0}
+  m_LocalPosition: {x: 0, y: -0.3353276, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
