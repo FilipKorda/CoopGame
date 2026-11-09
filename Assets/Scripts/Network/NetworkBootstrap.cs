@@ -39,6 +39,8 @@ namespace CoopGame
         [Tooltip("The test scene; also the fallback when the chosen scene can't be loaded.")]
         [SerializeField] string gameSceneName = "Game";
         [SerializeField] string bootstrapSceneName = "Bootstrap";
+        [Tooltip("Title screen the lobby's \"Wróć\" button goes back to.")]
+        [SerializeField] string mainMenuSceneName = "MainMenu";
         [Tooltip("Spawned by the server when a game starts and kept across level loads (team bolts, transitions).")]
         [SerializeField] GameObject sessionPrefab;
         [SerializeField] int maxPlayers = 2;
@@ -140,7 +142,18 @@ namespace CoopGame
 
             // The bootstrap scene creates a fresh NetworkManager, so drop this persistent one.
             Destroy(gameObject);
-            SceneManager.LoadScene(bootstrapSceneName);
+            SceneManager.LoadScene(LeaveToMainMenu ? mainMenuSceneName : bootstrapSceneName);
+            LeaveToMainMenu = false;
+        }
+
+        /// <summary>Set while the game's last level plays (<see cref="GameOver"/>): leaving goes to the title screen, not the lobby.</summary>
+        public static bool LeaveToMainMenu;
+
+        /// <summary>This machine: leave the game (the host leaving ends it for both).</summary>
+        public static void LeaveGame()
+        {
+            var bootstrap = FindAnyObjectByType<NetworkBootstrap>();
+            if (bootstrap != null) bootstrap.Disconnect();
         }
 
         void OnServerStarted()
@@ -241,6 +254,17 @@ namespace CoopGame
 
         /// <summary>Leave the lobby (the host leaving ends it for both) and go back to the menu.</summary>
         public void LeaveLobby() => Disconnect();
+
+        /// <summary>
+        /// Back to the title screen (MainMenu scene). Only from the menu, not in a lobby or a game. The NetworkManager
+        /// persists across scenes, so drop it: the bootstrap scene makes a fresh one when the player comes back.
+        /// </summary>
+        public void BackToMainMenu()
+        {
+            if (busy || session != null || networkManager.IsListening) return;
+            Destroy(gameObject);
+            SceneManager.LoadScene(mainMenuSceneName);
+        }
 
         public void ClearStatus() => status = "";
 
