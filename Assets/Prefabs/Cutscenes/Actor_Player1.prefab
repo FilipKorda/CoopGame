@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 158765653914675713}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.0294118, z: 0}
+  m_LocalPosition: {x: 0, y: 1.0725536, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -331,7 +331,7 @@ Transform:
   m_GameObject: {fileID: 1213068902188988975}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.06975647, w: 0.9975641}
-  m_LocalPosition: {x: 0.47, y: 0.482353, z: 0}
+  m_LocalPosition: {x: 0.29720095, y: 0.47000003, z: 0.029477626}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -856,7 +856,7 @@ Transform:
   m_GameObject: {fileID: 1817320993207535380}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: -0.030538514, w: 0.9995336}
-  m_LocalPosition: {x: -0.165, y: -0.041176517, z: 0}
+  m_LocalPosition: {x: -0.14681837, y: -0.11310011, z: 0.023281425}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -889,7 +889,7 @@ Transform:
   m_GameObject: {fileID: 2131211894108497108}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.482353, z: 0}
+  m_LocalPosition: {x: 0, y: -0.44560072, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1260,7 +1260,7 @@ Transform:
   m_GameObject: {fileID: 3996556384837950265}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: -0.06975647, w: 0.9975641}
-  m_LocalPosition: {x: -0.47, y: 0.482353, z: 0}
+  m_LocalPosition: {x: -0.29720095, y: 0.47000003, z: 0.029477626}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1473,7 +1473,7 @@ Transform:
   m_GameObject: {fileID: 4187855353822084336}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.117647, z: 0}
+  m_LocalPosition: {x: 0, y: 1.1500537, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1723,7 +1723,7 @@ Transform:
   m_GameObject: {fileID: 4916198283285324222}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.36470583, z: 0}
+  m_LocalPosition: {x: 0, y: -0.3711054, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2118,7 +2118,7 @@ Transform:
   m_GameObject: {fileID: 5406921820662407409}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.482353, z: 0}
+  m_LocalPosition: {x: 0, y: -0.44560072, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2221,25 +2221,29 @@ MonoBehaviour:
   headParts:
   - {fileID: 7655393451400822620}
   - {fileID: 1621307516933140710}
-  stepLength: 2.4
+  stepLength: 2.8
   fullSwingSpeed: 8
-  swingBuildUp: 12
-  hipSwing: 34
-  kneeBend: 55
-  shoulderSwing: 26
-  elbowRest: 12
-  elbowWalk: 30
-  armSpread: 12
-  legSpread: 3.5
-  bob: 0.035
-  walkLean: 6
-  torsoLean: 4
+  swingBuildUp: 6
+  hipSwing: 26
+  kneeBend: 58
+  shoulderSwing: 14
+  elbowRest: 40
+  elbowWalk: 25
+  armSpread: 10
+  legSpread: 2
+  bob: 0.045
+  walkLean: 2
+  torsoLean: -2
   hipTwist: 0
   hipDrop: 0
-  torsoTwist: 7
+  torsoTwist: 5
   torsoRoll: 3
   torsoShift: 0
-  headSteady: 0.8
+  headSteady: 0.85
+  stepImpact: 0.008
+  impactKnee: 30
+  impactNod: 4
+  walkKneeFlex: 14
   useStance: 1
   stanceBlendTime: 0.25
   stanceDrop: 0.035
@@ -2303,12 +2307,12 @@ MonoBehaviour:
     elbowRight: 30
     torsoLean: 2
   hanging:
-    hipLeft: {x: -2, y: 0, z: -4}
-    kneeLeft: 60
-    ankleLeft: 20
-    hipRight: {x: 6, y: 0, z: 4}
-    kneeRight: 45
-    ankleRight: 25
+    hipLeft: {x: -6, y: 0, z: -3}
+    kneeLeft: 20
+    ankleLeft: 25
+    hipRight: {x: 4, y: 0, z: 3}
+    kneeRight: 32
+    ankleRight: 30
     shoulderLeft: {x: -150, y: 0, z: -8}
     elbowLeft: 10
     shoulderRight: {x: -150, y: 0, z: 8}
@@ -2316,16 +2320,23 @@ MonoBehaviour:
     torsoLean: 0
   hangHandHeight: 1.95
   hangHandReach: 0.55
-  hangHandSpacing: 0.28
-  hangCloser: 0.06
-  hangLower: 0.15
-  gripOffset: {x: 0, y: -0.36, z: 0.006}
+  hangHandSpacing: 0.26
+  hangCloser: 0.15
+  hangLower: 0.092053816
+  hangWallGap: 0.04
+  hangArmStretch: 0.96
+  hangGripOver: 0.04
+  gripOffset: {x: 0, y: -0.34936106, z: 0.006}
   gripAbove: 0
-  shimmyCycle: 0.8
-  shimmyHold: 0.6
-  shimmyLift: 0.07
-  shimmyLegTrail: 8
-  shimmyLegSway: 3
+  shimmyCycle: 0.9
+  shimmyHold: 0.62
+  shimmyLift: 0.045
+  shimmyLegTrail: 6
+  shimmyLegSway: 5
+  shimmyLegLag: 0.15
+  shimmySag: 0.035
+  shimmyShift: 0.05
+  shimmyBlend: 0.25
   zipHandHeight: 2.2
   zipHandSpacing: 0.12
   handTargetBlend: 0.3
@@ -2334,17 +2345,19 @@ MonoBehaviour:
   flipPivotHeight: 1
   flipTurnAfter: 540
   flipTuck:
-    hipLeft: {x: -100, y: 0, z: -6}
-    kneeLeft: 120
-    ankleLeft: 30
-    hipRight: {x: -95, y: 0, z: 6}
-    kneeRight: 115
-    ankleRight: 30
-    shoulderLeft: {x: -55, y: 0, z: -12}
-    elbowLeft: 75
-    shoulderRight: {x: -55, y: 0, z: 12}
-    elbowRight: 75
-    torsoLean: 25
+    hipLeft: {x: -140, y: 0, z: -4}
+    kneeLeft: 155
+    ankleLeft: 45
+    hipRight: {x: -137, y: 0, z: 4}
+    kneeRight: 153
+    ankleRight: 45
+    shoulderLeft: {x: -45, y: 0, z: 15}
+    elbowLeft: 120
+    shoulderRight: {x: -45, y: 0, z: -15}
+    elbowRight: 120
+    torsoLean: 55
+  flipTuckHold: 2.6
+  flipHeadTuck: 40
   useCartwheel: 1
   cartwheelSideways: 0.6
   cartwheel:
@@ -2375,10 +2388,10 @@ MonoBehaviour:
   landTime: 0.32
   landSoftSpeed: 5
   landHardSpeed: 16
-  smoothing: 10
+  smoothing: 7
   jumpSmoothing: 16
-  restHips: {x: 0, y: 1.0294118, z: 0}
-  restUpperBody: {x: 0, y: 1.117647, z: 0}
+  restHips: {x: 0, y: 1.0725536, z: 0}
+  restUpperBody: {x: 0, y: 1.1500537, z: 0}
 --- !u!1 &5857697068035390737
 GameObject:
   m_ObjectHideFlags: 0
@@ -2494,7 +2507,7 @@ Transform:
   m_GameObject: {fileID: 6352704088846553821}
   serializedVersion: 2
   m_LocalRotation: {x: -0.104528464, y: 0, z: 0, w: 0.9945219}
-  m_LocalPosition: {x: 0.0382353, y: -0.30294126, z: 0}
+  m_LocalPosition: {x: 0, y: -0.3353276, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2526,7 +2539,7 @@ Transform:
   m_GameObject: {fileID: 6670315784058536410}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.36470583, z: 0}
+  m_LocalPosition: {x: 0, y: -0.3711054, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2559,7 +2572,7 @@ Transform:
   m_GameObject: {fileID: 6734908534480107301}
   serializedVersion: 2
   m_LocalRotation: {x: -0.104528464, y: 0, z: 0, w: 0.9945219}
-  m_LocalPosition: {x: -0.0382353, y: -0.30294126, z: 0}
+  m_LocalPosition: {x: 0, y: -0.3353276, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2803,7 +2816,7 @@ Transform:
   m_GameObject: {fileID: 7767921224373979879}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.030538514, w: 0.9995336}
-  m_LocalPosition: {x: 0.165, y: -0.041176517, z: 0}
+  m_LocalPosition: {x: 0.14681837, y: -0.11310011, z: 0.023281425}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2879,6 +2892,7 @@ MeshRenderer:
   m_Materials:
   - {fileID: 2100000, guid: 148d6570d1ecc574cb9cc979796d8a3c, type: 2}
   - {fileID: 2100000, guid: 5d827679e3b99054db088ce8490ce0e9, type: 2}
+  - {fileID: 2100000, guid: cd6a0cff424b6524c9df8a83b52b5aae, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
