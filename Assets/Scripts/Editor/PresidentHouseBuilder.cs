@@ -1,29 +1,52 @@
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace CoopGame.EditorTools
 {
     /// <summary>
-    /// Builds the island president's house (A2_Start) under the "President house" object: a chrome palace on a
-    /// two-tier podium with entrance stairs, a columned portico with a gold emblem, side wings, a gold dome and a tall
-    /// tower with a flag mast. Low-poly faceted meshes (flat normals) are saved under Assets/Meshes/PresidentHouse,
-    /// metal URP Lit materials under Assets/Materials/PresidentHouse. The old greybox cubes are only switched off.
-    /// Model space: x = right, z = depth (front face at z 0, the building grows backwards), y = up from the ground.
+    /// Builds the island president's house (A2_Start) under the "President house" object: a compact stone-and-timber
+    /// house. Stone plinth, steps and ground floor, a timber-framed plank upper floor, a wooden
+    /// shingle gable roof with a stone chimney, a small porch, shuttered windows. Metal only as details: hinges,
+    /// door straps, copper gutters and downpipes, wall lanterns, ridge cap and the gable emblem.
+    /// Faceted vertex-coloured meshes (alpha = shine) on Island_Solid / tiled variants, saved under
+    /// Assets/Meshes/PresidentHouseStone. Re-running rebuilds the model and keeps its current position and rotation.
+    /// Model space: x = right, z = depth (front step edge at z 0, the house grows backwards), y = up from the ground.
     /// </summary>
     public static class PresidentHouseBuilder
     {
         const string RootName = "President house";
         const string ModelName = "President House Model";
-        const string MeshDir = "Assets/Meshes/PresidentHouse";
-        const string MatDir = "Assets/Materials/PresidentHouse";
+        const string MeshDir = "Assets/Meshes/PresidentHouseStone";
+        const string MatDir = "Assets/Materials/PresidentHouse/Exterior";
 
-        // Front-centre of the podium in world space (keeps the outro cutscene area in front of the house free).
-        static readonly Vector3 Origin = new Vector3(-11.5f, 3.05f, 48.45f);
-        const float Scale = 0.8f;   // whole house, model space below is in unscaled metres
+        // Used only when there is no model yet (otherwise the existing model's position / rotation is kept).
+        static readonly Vector3 DefaultOrigin = new Vector3(-11.5f, 3.05f, 48.45f);
+        const float LayoutZ = 1.2f;   // the layout below starts at the plinth front; the steps stick out 1.2 m in front of it
 
-        static Material chrome, steel, gold, glass, lamp;
-        static Transform model;
+        // Layout (metres): plinth, ground floor (stone), upper floor (timber), roof.
+        const float PX = 5.0f, PZ1 = 9.0f, PY0 = -1.0f, F = 0.7f;
+        const float WX = 4.6f, WZ0 = 1.6f, WZ1 = 8.8f, G1 = 3.9f;
+        const float UX = 4.75f, UZ0 = 1.45f, UZ1 = 8.95f, U0 = 4.2f, U1 = 6.8f;
+        const float RX = 5.35f, E = 6.65f, ZF = 1.0f, ZB = 9.4f, Pitch = 28f;
+        static float R => E + RX * Mathf.Tan(Pitch * Mathf.Deg2Rad);   // ridge height (top of the roof boards)
+
+        // Palette (alpha = shine; kept low on stone and wood so flat faces don't flash white).
+        static readonly Color StoneW = new Color(0.50f, 0.48f, 0.45f, 0.03f), StoneF = new Color(0.40f, 0.39f, 0.37f, 0.03f),
+            StoneL = new Color(0.62f, 0.59f, 0.55f, 0.04f), StoneM = new Color(0.50f, 0.48f, 0.45f, 0.03f),
+            Boards = new Color(0.47f, 0.31f, 0.18f, 0.05f), WoodD = new Color(0.32f, 0.20f, 0.11f, 0.05f), WoodM = new Color(0.47f, 0.30f, 0.17f, 0.06f),
+            Shutter = new Color(0.44f, 0.29f, 0.17f, 0.05f), Shingle = new Color(0.36f, 0.25f, 0.18f, 0.04f), Soot = new Color(0.10f, 0.09f, 0.08f, 0f),
+            Iron = new Color(0.21f, 0.22f, 0.24f, 0.25f), Lead = new Color(0.36f, 0.38f, 0.41f, 0.3f),
+            Copper = new Color(0.72f, 0.43f, 0.26f, 0.5f), Brass = new Color(0.86f, 0.66f, 0.32f, 0.7f),
+            GlassGlow = new Color(0.36f, 0.26f, 0.15f, 1f), LampGlow = new Color(1f, 0.78f, 0.45f, 1f);
+
+        static Material solid, glow, stoneWall, stoneBlock, boardMat;
+        static Transform model, house, colliders;
+        static MB mStone, mFound, mTrim, mBoards, mTimber, mShingle, mMetal, mGlow;
+        static System.Random rnd;
+        static int boxCount, lightCount;
 
         [MenuItem("Tools/Coop Game/President House/Build (A2_Start)")]
         public static string Build()
@@ -34,396 +57,411 @@ namespace CoopGame.EditorTools
             MakeMaterials();
             Undo.IncrementCurrentGroup();
             Undo.SetCurrentGroupName("Build President House");
+            int group = Undo.GetCurrentGroup();
 
             // Old greybox: keep it, just switch it off.
             foreach (Transform c in root.transform)
                 if (c.name.StartsWith("President House") && c.name != ModelName && c.gameObject.activeSelf)
                 { Undo.RecordObject(c.gameObject, "Hide greybox"); c.gameObject.SetActive(false); }
 
+            // Keep where the model is now (it may have been moved by hand).
+            Vector3 pos = DefaultOrigin; Quaternion rot = Quaternion.Euler(0, root.transform.eulerAngles.y, 0);
             var old = root.transform.Find(ModelName);
-            if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
+            if (old != null) { pos = old.position; rot = old.rotation; Undo.DestroyObjectImmediate(old.gameObject); }
 
             var go = new GameObject(ModelName);
             Undo.RegisterCreatedObjectUndo(go, "Build President House");
             go.transform.SetParent(root.transform, false);
-            go.transform.SetPositionAndRotation(Origin, Quaternion.Euler(0, root.transform.eulerAngles.y, 0));
-            go.transform.localScale = Vector3.one * Scale;   // scales round the front-centre, so the front line stays put
-            go.isStatic = true;
+            go.transform.SetPositionAndRotation(pos, rot);
+            go.transform.localScale = Vector3.one;
             model = go.transform;
+            house = new GameObject("House").transform; house.SetParent(model, false); house.localPosition = new Vector3(0, 0, LayoutZ);
+            colliders = new GameObject("Colliders").transform; colliders.SetParent(house, false);
 
-            BuildPodium();
-            BuildHall();
-            BuildPortico();
-            BuildWings();
-            BuildDome();
-            BuildTower();
-            BuildLamps();
-            BuildReflectionProbe();
+            rnd = new System.Random(7); boxCount = 0; lightCount = 0;
+            mStone = new MB(); mFound = new MB(); mTrim = new MB(); mBoards = new MB(); mTimber = new MB(); mShingle = new MB(); mMetal = new MB(); mGlow = new MB();
+
+            BuildFoundation();
+            BuildGroundFloor();
+            BuildUpperFloor();
+            BuildRoof();
+            BuildChimney();
+            BuildPorch();
+            BuildLanterns();
+
+            Piece("Stone Foundation", mFound, stoneBlock);
+            Piece("Stone Walls", mStone, stoneWall);
+            Piece("Stone Trim", mTrim, solid);
+            Piece("Wood Boards", mBoards, boardMat);
+            Piece("Timber Frame", mTimber, solid);
+            Piece("Roof Shingles", mShingle, solid);
+            Piece("Metal Details", mMetal, solid);
+            Piece("Window Glow", mGlow, glow, shadows: false);
 
             foreach (var t in go.GetComponentsInChildren<Transform>(true)) if (t.GetComponent<Light>() == null) t.gameObject.isStatic = true;
+            Undo.CollapseUndoOperations(group);
+            EditorSceneManager.MarkSceneDirty(root.scene);
+            AssetDatabase.SaveAssets();
             Selection.activeGameObject = go;
             return Report();
         }
 
         // ---------- Parts ----------
 
-        static void BuildPodium()
+        static void BuildFoundation()
         {
-            var g = Group("Podium");
-            Box(g, "Base", new Vector3(0, -0.75f, 7.6f), new Vector3(21.0f, 2.0f, 15.2f), steel);          // y -1.75 .. 0.25 (sunk into the ground), z 0 .. 15.2
-            Box(g, "Base Gold Band", new Vector3(0, 0.3f, 7.6f), new Vector3(21.1f, 0.12f, 15.3f), gold);
-            Box(g, "Upper", new Vector3(0, 0.85f, 8.2f), new Vector3(19.6f, 1.1f, 12.8f), chrome);          // top at y 1.4, z 1.8 .. 14.6
-            Box(g, "Upper Gold Edge", new Vector3(0, 1.43f, 8.2f), new Vector3(19.7f, 0.08f, 12.9f), gold);
-            // Entrance stairs: 5 steps from the front edge up to the upper tier.
-            for (int i = 0; i < 5; i++)
+            // Plinth (y -1.0 .. 0.72, sunk into the sloping ground), flagstone cap = porch floor.
+            mFound.Box(new Vector3(0, (PY0 + 0.6f) / 2, PZ1 / 2), new Vector3(2 * PX, 0.6f - PY0, PZ1), StoneF);
+            mTrim.Box(new Vector3(0, 0.65f, PZ1 / 2), new Vector3(2 * PX + 0.12f, 0.14f, PZ1 + 0.12f), StoneL);
+            Col("Plinth", new Vector3(0, (PY0 + 0.72f) / 2, PZ1 / 2), new Vector3(2 * PX + 0.12f, 0.72f - PY0, PZ1 + 0.12f));
+            // Three stone steps up to the porch.
+            for (int i = 0; i < 3; i++)
             {
-                float top = 0.25f + (i + 1) * 0.23f, depth = 1.8f - i * 0.36f;
-                Box(g, "Step " + (i + 1), new Vector3(0, (top - 0.4f) * 0.5f, i * 0.36f + depth * 0.5f),
-                    new Vector3(8.0f, top + 0.4f, depth), i % 2 == 0 ? chrome : steel);
-            }
-            // Gold handrail blocks either side of the stairs.
-            foreach (float s in new[] { -1f, 1f })
-                Box(g, s < 0 ? "Stair Cheek L" : "Stair Cheek R", new Vector3(s * 4.3f, 0.9f, 0.9f), new Vector3(0.6f, 1.0f, 1.8f), gold);
-        }
-
-        static void BuildHall()
-        {
-            var g = Group("Main Hall");
-            Box(g, "Hall", new Vector3(0, 5.85f, 7.4f), new Vector3(14.0f, 8.9f, 8.2f), chrome);            // y 1.4 .. 10.3, z 3.3 .. 11.5
-            Box(g, "Roof Slab", new Vector3(0, 10.5f, 7.4f), new Vector3(14.6f, 0.4f, 8.8f), steel);
-            Box(g, "Roof Gold Cornice", new Vector3(0, 10.25f, 7.4f), new Vector3(14.8f, 0.18f, 9.0f), gold);
-            // Door with a gold frame (front face of the hall at z 3.3).
-            Box(g, "Door", new Vector3(0, 3.6f, 3.25f), new Vector3(2.6f, 4.4f, 0.2f), steel);
-            Box(g, "Door Frame Top", new Vector3(0, 5.95f, 3.2f), new Vector3(3.3f, 0.35f, 0.3f), gold);
-            Box(g, "Door Frame L", new Vector3(-1.48f, 3.6f, 3.2f), new Vector3(0.35f, 4.4f, 0.3f), gold);
-            Box(g, "Door Frame R", new Vector3(1.48f, 3.6f, 3.2f), new Vector3(0.35f, 4.4f, 0.3f), gold);
-            Box(g, "Door Split", new Vector3(0, 3.6f, 3.13f), new Vector3(0.06f, 4.4f, 0.06f), gold);
-            // Tall glowing windows on the front and sides.
-            foreach (float x in new[] { -4.6f, -2.8f, 2.8f, 4.6f })
-                Window(g, "Front Window", new Vector3(x, 5.2f, 3.27f), new Vector2(1.1f, 4.6f), Vector3.back);
-            foreach (float s in new[] { -1f, 1f })
-                for (int i = 0; i < 3; i++)
-                    Window(g, "Side Window", new Vector3(s * 7.03f, 9.0f, 5.0f + i * 2.4f), new Vector2(1.1f, 1.8f), s < 0 ? Vector3.left : Vector3.right);
-            // Pilasters at the hall corners.
-            foreach (float s in new[] { -1f, 1f })
-                foreach (float z in new[] { 3.3f, 11.5f })
-                    Box(g, "Pilaster", new Vector3(s * 7.0f, 5.85f, z), new Vector3(0.7f, 8.9f, 0.7f), steel);
-        }
-
-        static void BuildPortico()
-        {
-            var g = Group("Portico");
-            var column = Prism(10, 0.42f, 0.42f, 7.6f, "Column");
-            var capital = Prism(10, 0.62f, 0.5f, 0.35f, "ColumnCap");
-            foreach (float x in new[] { -6.0f, -3.6f, -1.2f, 1.2f, 3.6f, 6.0f })
-            {
-                Box(g, "Column Base", new Vector3(x, 1.6f, 2.2f), new Vector3(1.1f, 0.4f, 1.1f), gold);
-                var c = Mesh(g, "Column", column, new Vector3(x, 1.8f, 2.2f), Quaternion.identity, chrome);
-                var cc = c.AddComponent<CapsuleCollider>(); cc.radius = 0.42f; cc.height = 7.6f; cc.center = new Vector3(0, 3.8f, 0);
-                Mesh(g, "Column Capital", capital, new Vector3(x, 9.6f, 2.2f), Quaternion.Euler(180, 0, 0), gold);
-            }
-            Box(g, "Entablature", new Vector3(0, 9.95f, 2.4f), new Vector3(14.2f, 0.7f, 2.4f), chrome);
-            Box(g, "Entablature Gold", new Vector3(0, 9.55f, 1.18f), new Vector3(14.2f, 0.16f, 0.06f), gold);
-            // Pediment (triangular gable) with a gold trim and the emblem.
-            var ped = Gable(14.2f, 2.6f, 2.4f, "Pediment");
-            Mesh(g, "Pediment", ped, new Vector3(0, 10.3f, 2.4f), Quaternion.identity, chrome, ped);
-            var trim = Gable(14.6f, 2.75f, 0.2f, "PedimentTrim");
-            Mesh(g, "Pediment Gold Trim", trim, new Vector3(0, 10.25f, 1.15f), Quaternion.identity, gold);
-            Emblem(g, new Vector3(0, 11.35f, 1.12f), 0.85f);
-        }
-
-        static void BuildWings()
-        {
-            var g = Group("Wings");
-            foreach (float s in new[] { -1f, 1f })
-            {
-                string side = s < 0 ? " L" : " R";
-                Box(g, "Wing" + side, new Vector3(s * 8.3f, 4.4f, 7.6f), new Vector3(3.0f, 6.0f, 7.4f), chrome);       // y 1.4 .. 7.4, x 6.8 .. 9.8
-                Box(g, "Wing Cornice" + side, new Vector3(s * 8.35f, 7.5f, 7.6f), new Vector3(3.3f, 0.2f, 7.7f), gold);
-                Box(g, "Wing Roof" + side, new Vector3(s * 8.3f, 7.75f, 7.6f), new Vector3(3.1f, 0.3f, 7.5f), steel);
-                Window(g, "Wing Window" + side, new Vector3(s * 8.3f, 4.6f, 3.88f), new Vector2(1.3f, 3.4f), Vector3.back);
-                for (int i = 0; i < 2; i++)
-                    Window(g, "Wing Side Window" + side, new Vector3(s * 9.82f, 4.6f, 5.8f + i * 3.4f), new Vector2(1.2f, 3.4f), s < 0 ? Vector3.left : Vector3.right);
-                // Small gold obelisks on the wing corners.
-                var ob = Prism(4, 0.35f, 0.0f, 1.8f, "Obelisk", 45f);
-                Mesh(g, "Wing Obelisk" + side, ob, new Vector3(s * 9.4f, 7.9f, 4.2f), Quaternion.identity, gold);
+                float top = i * 0.24f, depth = (3 - i) * 0.4f;
+                var c = new Vector3(0, (top - 0.7f) / 2, -depth / 2); var s = new Vector3(2.6f, top + 0.7f, depth);
+                mTrim.Box(c, s, i % 2 == 0 ? StoneM : StoneL);
+                Col("Step " + (i + 1), c + Vector3.up * 0.01f, s + Vector3.up * 0.02f);
             }
         }
 
-        static void BuildDome()
+        static void BuildGroundFloor()
         {
-            var g = Group("Dome");
-            const float z = 7.4f;
-            var drum = Prism(16, 4.2f, 4.2f, 1.6f, "Drum");
-            Mesh(g, "Drum", drum, new Vector3(0, 10.7f, z), Quaternion.identity, chrome, drum);
-            Mesh(g, "Drum Gold Ring", Prism(16, 4.45f, 4.45f, 0.25f, "DrumRing"), new Vector3(0, 12.3f, z), Quaternion.identity, gold);
-            for (int i = 0; i < 8; i++)   // glowing slots round the drum
-            {
-                float a = (i + 0.5f) * Mathf.PI * 2f / 8f;
-                var dir = new Vector3(Mathf.Sin(a), 0, -Mathf.Cos(a));
-                Window(g, "Drum Window", new Vector3(dir.x * 4.08f, 11.5f, z + dir.z * 4.08f), new Vector2(0.7f, 1.0f), dir);
-            }
-            var dome = Dome(16, 5, 4.2f, 3.0f, "Dome");
-            Mesh(g, "Dome", dome, new Vector3(0, 12.55f, z), Quaternion.identity, gold, dome);
-            Mesh(g, "Lantern", Prism(8, 0.65f, 0.65f, 1.0f, "Lantern"), new Vector3(0, 15.4f, z), Quaternion.identity, chrome);
-            Mesh(g, "Lantern Cap", Prism(8, 0.85f, 0.0f, 1.0f, "LanternCap"), new Vector3(0, 16.4f, z), Quaternion.identity, gold);
+            mStone.Box(new Vector3(0, (F + G1) / 2, (WZ0 + WZ1) / 2), new Vector3(2 * WX, G1 - F, WZ1 - WZ0), StoneW);
+            // Door + windows.
+            BuildDoor();
+            foreach (float x in new[] { -3.0f, 3.0f }) Window(new Vector3(x, 2.25f, WZ0), Vector3.back, 0.9f, 1.3f, true);
+            foreach (float x in new[] { -2.4f, 2.4f }) Window(new Vector3(x, 2.25f, WZ1), Vector3.forward, 0.9f, 1.3f, true);
+            foreach (float s in new[] { -1f, 1f })
+                foreach (float z in new[] { 3.4f, 7.0f })
+                    Window(new Vector3(s * WX, 2.25f, z), s < 0 ? Vector3.left : Vector3.right, 0.9f, 1.3f, true);
         }
 
-        static void BuildTower()
+        static void BuildDoor()
         {
-            var g = Group("Tower");
-            const float z = 12.0f, w = 4.6f, top = 20f;
-            Box(g, "Tower Base", new Vector3(0, 1.4f + 0.5f, z), new Vector3(w + 1.2f, 1.0f, w + 1.2f), steel);
-            Box(g, "Tower Shaft", new Vector3(0, (1.4f + top) * 0.5f, z), new Vector3(w, top - 1.4f, w), chrome);
-            foreach (float sx in new[] { -1f, 1f })   // steel corner ribs break up the big chrome faces
-                foreach (float sz in new[] { -1f, 1f })
-                    Box(g, "Tower Corner Rib", new Vector3(sx * w * 0.5f, (1.4f + top) * 0.5f, z + sz * w * 0.5f), new Vector3(0.55f, top - 1.4f, 0.55f), steel, collider: false);
-            foreach (float y in new[] { 10.6f, 16.9f })
-                Box(g, "Tower Gold Band", new Vector3(0, y, z), new Vector3(w + 0.25f, 0.3f, w + 0.25f), gold);
-            // Lit window slots on the sides and back (the front holds the emblem).
-            foreach (var d in new[] { Vector3.forward, Vector3.left, Vector3.right })
-                Window(g, "Tower Window", new Vector3(0, 0, z) + d * (w * 0.5f + 0.03f) + Vector3.up * 14.5f, new Vector2(1.0f, 2.6f), d);
-            // Gold emblem on the tower front, just above the dome.
-            Emblem(g, new Vector3(0, 18.5f, z - w * 0.5f - 0.05f), 1.0f);
-            Box(g, "Tower Cornice", new Vector3(0, top + 0.2f, z), new Vector3(w + 0.8f, 0.4f, w + 0.8f), gold);
-            // Corner pinnacles.
-            var pin = Prism(4, 0.35f, 0.0f, 1.6f, "Pinnacle", 45f);
+            var n = Vector3.back; float z = WZ0, w = 1.3f, h = 2.4f;
+            mBoards.Box(new Vector3(0, F + h / 2, z - 0.03f), new Vector3(w, h, 0.08f), WoodM);
+            mTimber.Box(new Vector3(-w / 2 - 0.07f, F + (h + 0.14f) / 2, z - 0.05f), new Vector3(0.14f, h + 0.14f, 0.12f), WoodD);
+            mTimber.Box(new Vector3(w / 2 + 0.07f, F + (h + 0.14f) / 2, z - 0.05f), new Vector3(0.14f, h + 0.14f, 0.12f), WoodD);
+            mTimber.Box(new Vector3(0, F + h + 0.07f, z - 0.05f), new Vector3(w + 0.28f, 0.14f, 0.12f), WoodD);
+            // Stone lintel.
+            mTrim.Box(new Vector3(0, F + h + 0.3f, z - 0.06f), new Vector3(w + 0.7f, 0.32f, 0.14f), StoneL);
+            // Iron hinge straps.
+            foreach (float y in new[] { 0.5f, 1.9f })
+            {
+                mMetal.Box(new Vector3(-0.08f, F + y, z - 0.085f), new Vector3(w - 0.2f, 0.08f, 0.025f), Iron);
+            }
+        }
+
+        static void BuildUpperFloor()
+        {
+            float mz = (UZ0 + UZ1) / 2, H = U1 - U0, yc = (U0 + U1) / 2;
+            mBoards.Box(new Vector3(0, yc, mz), new Vector3(2 * UX, H, UZ1 - UZ0), Boards);
+            // Floor band (the jetty beam), top plate and corner posts.
+            mTimber.Box(new Vector3(0, (G1 + U0) / 2, mz), new Vector3(2 * UX + 0.16f, U0 - G1, UZ1 - UZ0 + 0.16f), WoodD);
+            mTimber.Box(new Vector3(0, U1 - 0.09f, mz), new Vector3(2 * UX + 0.12f, 0.18f, UZ1 - UZ0 + 0.12f), WoodD);
             foreach (float sx in new[] { -1f, 1f })
-                foreach (float sz in new[] { -1f, 1f })
-                    Mesh(g, "Pinnacle", pin, new Vector3(sx * (w * 0.5f + 0.1f), top + 0.4f, z + sz * (w * 0.5f + 0.1f)), Quaternion.identity, gold);
-            var spire = Prism(4, w * 0.62f, 0.0f, 3.5f, "Spire", 45f);
-            Mesh(g, "Spire", spire, new Vector3(0, top + 0.4f, z), Quaternion.identity, chrome, spire);
-            Mesh(g, "Spire Gold Tip", Prism(8, 0.35f, 0.0f, 0.8f, "SpireTip"), new Vector3(0, top + 3.5f, z), Quaternion.identity, gold);
-        }
-
-        static void BuildLamps()
-        {
-            var g = Group("Lights");
-            var pole = Prism(8, 0.16f, 0.12f, 3.4f, "LampPole");
+                foreach (float z in new[] { UZ0, UZ1 })
+                    mTimber.Box(new Vector3(sx * UX, yc, z), new Vector3(0.24f, H, 0.24f), WoodD);
+            // Front: posts between the windows.
             foreach (float s in new[] { -1f, 1f })
             {
-                string side = s < 0 ? " L" : " R";
-                var basePos = new Vector3(s * 5.4f, 0.25f, 0.9f);
-                Box(g, "Lamp Base" + side, basePos + Vector3.up * 0.25f, new Vector3(0.7f, 0.5f, 0.7f), gold);
-                Mesh(g, "Lamp Pole" + side, pole, basePos + Vector3.up * 0.5f, Quaternion.identity, steel);
-                Box(g, "Lamp Glow" + side, basePos + Vector3.up * 4.2f, new Vector3(0.55f, 0.75f, 0.55f), lamp, collider: false);
-                Mesh(g, "Lamp Cap" + side, Prism(4, 0.5f, 0.0f, 0.5f, "LampCap", 45f), basePos + Vector3.up * 4.58f, Quaternion.identity, gold);
-                AddLight(g, "Lamp Light" + side, basePos + Vector3.up * 4.2f + Vector3.back * 0.3f, LightType.Point, new Color(1f, 0.78f, 0.45f), 2.5f, 7f);
-                // Warm uplight washing the metal facade.
-                var up = AddLight(g, "Facade Uplight" + side, new Vector3(s * 4.8f, 1.6f, 0.4f), LightType.Spot, new Color(1f, 0.85f, 0.6f), 12f, 13f);
-                up.transform.localRotation = Quaternion.LookRotation(new Vector3(-s * 0.15f, 1.0f, 0.35f));
-                up.spotAngle = 70f;
+                mTimber.Box(new Vector3(s * 1.35f, yc, UZ0 - 0.03f), new Vector3(0.2f, H, 0.12f), WoodD);
+                var n = s < 0 ? Vector3.left : Vector3.right;
+                foreach (float z in new[] { 3.4f, 7.0f }) Window(new Vector3(s * UX, 5.55f, z), n, 0.85f, 1.1f, false);
+                Window(new Vector3(s * 2.4f, 5.55f, UZ1), Vector3.forward, 0.85f, 1.1f, false);
             }
-            AddLight(g, "Portico Light", new Vector3(0, 8.6f, 2.0f), LightType.Point, new Color(1f, 0.8f, 0.5f), 2f, 6f);
-            AddLight(g, "Tower Emblem Light", new Vector3(0, 18.5f, 9.2f), LightType.Point, new Color(1f, 0.82f, 0.5f), 2f, 5f);
-        }
+            foreach (float x in new[] { -2.7f, 0f, 2.7f }) Window(new Vector3(x, 5.55f, UZ0), Vector3.back, 0.85f, 1.1f, false);
+            Col("House Body", new Vector3(0, (F + U1) / 2, mz), new Vector3(2 * UX, U1 - F, UZ1 - UZ0));
 
-        static void BuildReflectionProbe()
-        {
-            // The scene has no skybox, so chrome needs its own reflections: a baked probe around the house.
-            var go = new GameObject("President House Reflections");
-            go.transform.SetParent(model, false);
-            go.transform.localPosition = new Vector3(0, 16f, -6f);   // high up: sees more sky than grass, so chrome reads silver
-            var p = go.AddComponent<ReflectionProbe>();
-            p.mode = UnityEngine.Rendering.ReflectionProbeMode.Custom;
-            p.size = new Vector3(40f, 60f, 46f);
-            p.center = new Vector3(0, 0f, 12f);
-            p.boxProjection = false;
-            p.resolution = 256;
-            p.importance = 2;
-            p.intensity = 0.8f;
-            p.nearClipPlane = 0.3f;
-            p.farClipPlane = 600f;
-            p.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.SolidColor;
-            p.backgroundColor = new Color(0.55f, 0.68f, 0.85f);
-            string path = MatDir + "/PresidentHouse_Reflection.exr";
-            if (Lightmapping.BakeReflectionProbe(p, path))
+            // Plank gables under the roof, with a king post.
+            var tri = new[] { new Vector2(-UX, U1), new Vector2(UX, U1), new Vector2(0, R - 0.16f) };
+            mBoards.ExtrudeXY(tri, UZ0, UZ0 + 0.3f, Boards, Vector3.zero);
+            mBoards.ExtrudeXY(tri, UZ1 - 0.3f, UZ1, Boards, Vector3.zero);
+            foreach (var (z, n) in new[] { (UZ0, Vector3.back), (UZ1, Vector3.forward) })
             {
-                AssetDatabase.ImportAsset(path);
-                p.customBakedTexture = AssetDatabase.LoadAssetAtPath<Cubemap>(path);
+                mTimber.Box(new Vector3(0, (U1 + R - 0.3f) / 2, z + n.z * 0.03f), new Vector3(0.18f, R - 0.3f - U1, 0.12f), WoodD);
+            }
+            // Presidential emblem on the front gable: iron disc with a brass star.
+            mMetal.Prism(new Vector3(0, 7.75f, UZ0 - 0.105f), 16, 0.44f, 0.44f, 0.03f, Iron, Quaternion.Euler(-90, 0, 0));
+            mMetal.ExtrudeXY(StarPts(5, 0.32f, 0.13f), UZ0 - 0.135f, UZ0 - 0.175f, Brass, new Vector3(0, 7.75f, 0));
+        }
+
+        static void BuildRoof()
+        {
+            float mz = (ZF + ZB) / 2, len = ZB - ZF;
+            foreach (float s in new[] { -1f, 1f })
+            {
+                var eave = new Vector3(s * RX, E, 0); var ridge = new Vector3(0, R, 0);
+                var u = (ridge - eave).normalized; var nrm = Vector3.Cross(Vector3.forward, u).normalized; if (nrm.y < 0) nrm = -nrm;
+                float L = (ridge - eave).magnitude; var mid = (eave + ridge) / 2 + Vector3.forward * mz;
+                var q = Quaternion.LookRotation(Vector3.forward, nrm);
+                mTimber.Box(mid - nrm * 0.07f, new Vector3(L, 0.14f, len), WoodD, q);                       // roof boards
+                Shingles(mShingle, eave, ridge, Vector3.forward, ZF - 0.03f, ZB + 0.03f);
+                foreach (float z in new[] { ZF - 0.035f, ZB + 0.035f })                                     // bargeboards
+                    mTimber.Box(new Vector3(mid.x, mid.y, z) - nrm * 0.06f, new Vector3(L + 0.12f, 0.32f, 0.07f), WoodD, q);
+                // Copper gutter along the eave.
+                mMetal.Box(new Vector3(s * (RX + 0.12f), E - 0.14f, mz), new Vector3(0.16f, 0.13f, len), Copper);
+                // One downpipe per side: drop, dog-leg in to the wall, down to the plinth.
+                {
+                    const float z = 1.85f;
+                    float xo = s * (RX + 0.12f), xi = s * 4.92f;
+                    Rod(mMetal, new Vector3(xo, E - 0.12f, z), new Vector3(xo, E - 0.5f, z), 0.11f, Copper);
+                    Rod(mMetal, new Vector3(xo, E - 0.5f, z), new Vector3(xi, E - 1.05f, z), 0.11f, Copper);
+                    Rod(mMetal, new Vector3(xi, E - 1.05f, z), new Vector3(xi, 0.95f, z), 0.11f, Copper);
+                    Rod(mMetal, new Vector3(xi, 0.98f, z), new Vector3(s * 5.15f, 0.8f, z), 0.11f, Copper);
+                }
+            }
+            // Lead ridge cap.
+            mMetal.Box(new Vector3(0, R - 0.06f, mz), new Vector3(0.3f, 0.3f, len + 0.12f), Lead, Quaternion.Euler(0, 0, 45));
+            // Convex roof collider.
+            var cm = new MB(); cm.ExtrudeXY(new[] { new Vector2(-RX - 0.1f, E - 0.2f), new Vector2(RX + 0.1f, E - 0.2f), new Vector2(0, R + 0.1f) }, ZF, ZB, Color.white, Vector3.zero);
+            var cgo = new GameObject("Roof"); cgo.transform.SetParent(colliders, false);
+            var mc = cgo.AddComponent<MeshCollider>(); mc.sharedMesh = Save(cm.Done("PHS_RoofCollider")); mc.convex = true;
+        }
+
+        static void BuildChimney()
+        {
+            const float x = 3.0f, z = 6.2f, top = 10.4f;
+            mStone.Box(new Vector3(x, (6.9f + top) / 2, z), new Vector3(0.9f, top - 6.9f, 0.9f), StoneW);
+            mTrim.Box(new Vector3(x, top + 0.07f, z), new Vector3(1.1f, 0.14f, 1.1f), StoneL);
+            mTrim.Box(new Vector3(x, top + 0.145f, z), new Vector3(0.6f, 0.02f, 0.6f), Soot);
+            Col("Chimney", new Vector3(x, (6.9f + top) / 2, z), new Vector3(0.9f, top - 6.9f, 0.9f));
+        }
+
+        static void BuildPorch()
+        {
+            // Posts, beam, small shingle lean-to roof.
+            foreach (float s in new[] { -1f, 1f })
+            {
+                mTimber.Box(new Vector3(s * 2.1f, (0.72f + 3.3f) / 2, 0.3f), new Vector3(0.22f, 3.3f - 0.72f, 0.22f), WoodM);
+                Col("Porch Post " + (s < 0 ? "L" : "R"), new Vector3(s * 2.1f, (0.72f + 3.3f) / 2, 0.3f), new Vector3(0.34f, 3.3f - 0.72f, 0.34f));
+            }
+            mTimber.Box(new Vector3(0, 3.4f, 0.3f), new Vector3(4.9f, 0.2f, 0.2f), WoodD);
+            var eave = new Vector3(0, 3.62f, -0.2f); var top = new Vector3(0, 3.98f, 1.58f);
+            var u = (top - eave).normalized; var nrm = Vector3.Cross(Vector3.right, u).normalized; if (nrm.y < 0) nrm = -nrm;
+            float L = (top - eave).magnitude; var q = Quaternion.LookRotation(Vector3.right, nrm); var mid = (eave + top) / 2;
+            mTimber.Box(mid - nrm * 0.07f, new Vector3(L, 0.14f, 4.9f), WoodD, q);
+            Shingles(mShingle, eave, top, Vector3.right, -2.48f, 2.48f);
+            foreach (float s in new[] { -1f, 1f })
+                mTimber.Box(mid + Vector3.right * s * 2.49f - nrm * 0.06f, new Vector3(L + 0.06f, 0.3f, 0.06f), WoodD, q);
+            mMetal.Box(new Vector3(0, 3.5f, -0.3f), new Vector3(4.96f, 0.12f, 0.14f), Copper);
+            var cgo = new GameObject("Porch Roof"); cgo.transform.SetParent(colliders, false);
+            cgo.transform.localPosition = mid - nrm * 0.02f; cgo.transform.localRotation = q;
+            cgo.AddComponent<BoxCollider>().size = new Vector3(L, 0.24f, 4.9f);
+        }
+
+        static void BuildLanterns()
+        {
+            var g = new GameObject("Lights").transform; g.SetParent(house, false);
+            foreach (float s in new[] { -1f, 1f })
+            {
+                float x = s * 1.05f, z = WZ0, lz = z - 0.32f;
+                mMetal.Box(new Vector3(x, 3.15f, z - 0.015f), new Vector3(0.12f, 0.24f, 0.03f), Iron);
+                Rod(mMetal, new Vector3(x, 3.15f, z), new Vector3(x, 3.15f, z - 0.38f), 0.045f, Iron);
+                mMetal.Prism(new Vector3(x, 2.91f, lz), 4, 0.18f, 0f, 0.13f, Brass, 45f);
+                mMetal.Box(new Vector3(x, 2.6f, lz), new Vector3(0.22f, 0.04f, 0.22f), Iron);
+                mGlow.Box(new Vector3(x, 2.755f, lz), new Vector3(0.17f, 0.26f, 0.17f), LampGlow);
+                AddLight(g, "Lantern Light " + (s < 0 ? "L" : "R"), new Vector3(x, 2.72f, z - 0.85f), new Color(1f, 0.78f, 0.48f), 1.6f, 5f);
+            }
+        }
+        // ---------- Details ----------
+
+        /// <summary>Window on a wall: c = opening centre on the wall surface, n = outward normal.</summary>
+        static void Window(Vector3 c, Vector3 n, float w, float h, bool stone)
+        {
+            var q = Quaternion.LookRotation(n); var r = q * Vector3.right;
+            Vector3 P(float x, float y, float o) => c + r * x + Vector3.up * y + n * o;
+            mGlow.Box(P(0, 0, 0.005f), new Vector3(w, h, 0.02f), GlassGlow, q);
+            mTimber.Box(P(-w / 2 - 0.045f, 0, 0.04f), new Vector3(0.09f, h + 0.18f, 0.1f), WoodD, q);
+            mTimber.Box(P(w / 2 + 0.045f, 0, 0.04f), new Vector3(0.09f, h + 0.18f, 0.1f), WoodD, q);
+            mTimber.Box(P(0, h / 2 + 0.045f, 0.04f), new Vector3(w, 0.09f, 0.1f), WoodD, q);
+            mTimber.Box(P(0, -h / 2 - 0.045f, 0.04f), new Vector3(w, 0.09f, 0.1f), WoodD, q);
+            if (stone)
+            {
+                mTrim.Box(P(0, -h / 2 - 0.15f, 0.08f), new Vector3(w + 0.36f, 0.12f, 0.2f), StoneL, q);
+                mTrim.Box(P(0, h / 2 + 0.22f, 0.06f), new Vector3(w + 0.5f, 0.26f, 0.14f), StoneL, q);
+            }
+            // Open shutters (ground floor only).
+            if (!stone) return;
+            float sw = w / 2 + 0.04f;
+            foreach (float s in new[] { -1f, 1f })
+            {
+                float sx = s * (w / 2 + 0.11f + sw / 2);
+                mBoards.Box(P(sx, 0, 0.045f), new Vector3(sw, h + 0.06f, 0.05f), Jit(Shutter, 0.03f), q);
+            }
+        }
+        static void Rod(MB mb, Vector3 a, Vector3 b, float t, Color col)
+        {
+            var d = b - a; var up = Mathf.Abs(Vector3.Dot(d.normalized, Vector3.up)) > 0.9f ? Vector3.forward : Vector3.up;
+            mb.Box((a + b) / 2, new Vector3(t, t, d.magnitude + t * 0.5f), col, Quaternion.LookRotation(d.normalized, up));
+        }
+
+        /// <summary>Courses of wooden shingles from the eave line up to the ridge line, along axis from a0 to a1.</summary>
+        static void Shingles(MB mb, Vector3 eave, Vector3 ridge, Vector3 axis, float a0, float a1)
+        {
+            var u = (ridge - eave).normalized; float len = (ridge - eave).magnitude;
+            var nrm = Vector3.Cross(axis, u).normalized; if (nrm.y < 0) nrm = -nrm;
+            // Tilt each course so its lower (butt) edge stands proud of the course below.
+            var tn = Quaternion.AngleAxis(6f, axis) * nrm; if (Vector3.Dot(tn, u) < 0) tn = Quaternion.AngleAxis(-6f, axis) * nrm;
+            var q = Quaternion.LookRotation(axis, tn);
+            const float course = 0.7f, width = 0.8f;
+            int n = Mathf.CeilToInt((len + 0.06f - width) / course) + 1;
+            for (int k = 0; k < n; k++)
+            {
+                float s = Mathf.Min(k * course + width / 2 - 0.06f, len + 0.02f - width / 2);
+                float x = a0;
+                while (x < a1)
+                {
+                    float l = a1 - a0 + 1f, x0 = Mathf.Max(x, a0), x1 = Mathf.Min(x + l, a1);
+                    if (x1 - x0 > 0.08f)
+                        mb.Box(eave + u * s + nrm * 0.045f + axis * ((x0 + x1) / 2), new Vector3(width, 0.06f, x1 - x0 - 0.03f), Jit(Shingle, 0.07f), q);
+                    x += l;
+                }
             }
         }
 
-        // ---------- Helpers: objects ----------
-
-        static Transform Group(string name)
+        static Color Jit(Color c, float amt)
         {
-            var t = new GameObject(name).transform; t.SetParent(model, false); return t;
+            float k = 1f + ((float)rnd.NextDouble() * 2f - 1f) * amt;
+            return new Color(c.r * k, c.g * k, c.b * k, c.a);
         }
 
-        static GameObject Box(Transform parent, string name, Vector3 pos, Vector3 size, Material mat, bool collider = true)
+        static Vector2[] StarPts(int points, float rOut, float rIn)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = name;
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = pos; go.transform.localScale = size;
-            go.GetComponent<MeshRenderer>().sharedMaterial = mat;
-            if (!collider) Object.DestroyImmediate(go.GetComponent<BoxCollider>());
-            return go;
+            var pts = new Vector2[points * 2];
+            for (int i = 0; i < pts.Length; i++) { float a = i * Mathf.PI / points, r = i % 2 == 0 ? rOut : rIn; pts[i] = new Vector2(Mathf.Sin(a) * r, Mathf.Cos(a) * r); }
+            return pts;
         }
 
-        static GameObject Mesh(Transform parent, string name, Mesh mesh, Vector3 pos, Quaternion rot, Material mat, Mesh convexCollider = null)
+        // ---------- Helpers: objects, materials ----------
+
+        static void Piece(string name, MB mb, Material mat, bool shadows = true)
         {
             var go = new GameObject(name);
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = pos; go.transform.localRotation = rot;
-            go.AddComponent<MeshFilter>().sharedMesh = mesh;
-            go.AddComponent<MeshRenderer>().sharedMaterial = mat;
-            if (convexCollider != null) { var mc = go.AddComponent<MeshCollider>(); mc.sharedMesh = convexCollider; mc.convex = true; }
-            return go;
+            go.transform.SetParent(house, false);
+            go.AddComponent<MeshFilter>().sharedMesh = Save(mb.Done("PHS_" + name.Replace(' ', '_')));
+            var mr = go.AddComponent<MeshRenderer>(); mr.sharedMaterial = mat;
+            if (!shadows) mr.shadowCastingMode = ShadowCastingMode.Off;
         }
 
-        static void Window(Transform parent, string name, Vector3 pos, Vector2 size, Vector3 facing)
+        static void Col(string name, Vector3 c, Vector3 s)
         {
-            var go = Box(parent, name, pos, new Vector3(size.x, size.y, 0.08f), glass, collider: false);
-            go.transform.localRotation = Quaternion.LookRotation(-facing);
-            var frame = Box(go.transform.parent, name + " Frame", pos - facing * 0.02f, new Vector3(size.x + 0.24f, size.y + 0.24f, 0.06f), gold, collider: false);
-            frame.transform.localRotation = go.transform.localRotation;
+            var go = new GameObject(name); go.transform.SetParent(colliders, false); go.transform.localPosition = c;
+            go.AddComponent<BoxCollider>().size = s;
         }
 
-        static void Emblem(Transform parent, Vector3 pos, float r)
-        {
-            // Gold ring + star facing the front (-z), glowing core behind the star.
-            var rot = Quaternion.Euler(-90, 0, 0);
-            Mesh(parent, "Emblem Ring", Prism(20, r, r, 0.12f, "EmblemDisc"), pos, rot, gold);
-            Mesh(parent, "Emblem Core", Prism(20, r * 0.82f, r * 0.82f, 0.16f, "EmblemCore"), pos, rot, lamp);
-            Mesh(parent, "Emblem Star", Star(5, r * 0.74f, r * 0.3f, 0.14f, "EmblemStar"), pos + Vector3.back * 0.16f, Quaternion.identity, gold);
-        }
-
-        static Light AddLight(Transform parent, string name, Vector3 pos, LightType type, Color c, float intensity, float range)
+        static void AddLight(Transform parent, string name, Vector3 pos, Color c, float intensity, float range)
         {
             var go = new GameObject(name); go.transform.SetParent(parent, false); go.transform.localPosition = pos;
-            var l = go.AddComponent<Light>(); l.type = type; l.color = c; l.intensity = intensity; l.range = range;
-            l.shadows = LightShadows.None;
-            return l;
+            var l = go.AddComponent<Light>(); l.type = LightType.Point; l.color = c; l.intensity = intensity; l.range = range; l.shadows = LightShadows.None;
+            lightCount++;
         }
-
-        // ---------- Helpers: materials ----------
 
         static void MakeMaterials()
         {
-            if (!AssetDatabase.IsValidFolder(MatDir)) AssetDatabase.CreateFolder("Assets/Materials", "PresidentHouse");
-            // Brushed metal rather than mirror chrome: still metallic, but softer, less glare.
-            chrome = Mat("PH_Chrome", new Color(0.78f, 0.8f, 0.84f), 0.85f, 0.5f);
-            steel = Mat("PH_DarkSteel", new Color(0.36f, 0.38f, 0.43f), 0.8f, 0.4f);
-            gold = Mat("PH_Gold", new Color(0.92f, 0.72f, 0.36f), 0.85f, 0.5f);
-            glass = Mat("PH_WindowGlow", new Color(0.3f, 0.22f, 0.12f), 0.1f, 0.6f, new Color(0.75f, 0.52f, 0.25f));   // warm lit interior vs cool metal
-            lamp = Mat("PH_LampGlow", new Color(1f, 0.85f, 0.55f), 0f, 0.4f, new Color(1.6f, 1.15f, 0.55f));
+            solid = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/StyleTest/Island_Solid.mat");
+            glow = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/StyleTest/Island_Glow.mat");
+            if (!AssetDatabase.IsValidFolder(MatDir)) AssetDatabase.CreateFolder("Assets/Materials/PresidentHouse", "Exterior");
+            stoneWall = TileMat("PHX_StoneWall", 0.95f, 0.45f, 0.4f, 0.035f, new Color(0.30f, 0.28f, 0.26f), 0.16f);
+            stoneBlock = TileMat("PHX_StoneBlocks", 1.4f, 0.4f, 0.5f, 0.04f, new Color(0.26f, 0.25f, 0.24f), 0.1f);
+            boardMat = TileMat("PHX_WoodBoards", 0.36f, 9f, 0f, 0.015f, new Color(0.22f, 0.13f, 0.07f), 0.12f);
         }
 
-        static Material Mat(string name, Color baseColor, float metallic, float smoothness, Color? emission = null)
+        static Material TileMat(string name, float tile, float aspect, float offset, float grout, Color groutCol, float variation)
         {
             string path = MatDir + "/" + name + ".mat";
             var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (m == null) { m = new Material(Shader.Find("Universal Render Pipeline/Lit")); AssetDatabase.CreateAsset(m, path); }
-            m.SetColor("_BaseColor", baseColor);
-            m.SetFloat("_Metallic", metallic);
-            m.SetFloat("_Smoothness", smoothness);
-            m.SetFloat("_EnvironmentReflections", 1f);
-            m.SetFloat("_SpecularHighlights", 1f);
-            if (emission.HasValue)
-            {
-                m.EnableKeyword("_EMISSION");
-                m.SetColor("_EmissionColor", emission.Value);
-                m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-            }
-            else { m.DisableKeyword("_EMISSION"); m.SetColor("_EmissionColor", Color.black); }
+            if (m == null) { m = new Material(solid); AssetDatabase.CreateAsset(m, path); } else m.CopyPropertiesFromMaterial(solid);
+            m.SetFloat("_TileSize", tile); m.SetFloat("_TileAspect", aspect); m.SetFloat("_BrickOffset", offset);
+            m.SetFloat("_GroutWidth", grout); m.SetColor("_GroutColor", groutCol); m.SetFloat("_TileVariation", variation); m.SetColor("_CheckerColor", Color.white);
             EditorUtility.SetDirty(m);
             return m;
         }
 
-        // ---------- Helpers: faceted meshes ----------
-
-        class MB
-        {
-            readonly List<Vector3> v = new List<Vector3>(); readonly List<int> t = new List<int>();
-            public Vector3 Centre;
-            public void Tri(Vector3 a, Vector3 b, Vector3 c)
-            {
-                // Wind so the face points away from the shape centre (all shapes here are star-shaped around it).
-                var n = Vector3.Cross(b - a, c - a);
-                if (Vector3.Dot(n, (a + b + c) / 3f - Centre) < 0) { var x = b; b = c; c = x; }
-                int i = v.Count; v.Add(a); v.Add(b); v.Add(c); t.Add(i); t.Add(i + 1); t.Add(i + 2);
-            }
-            public void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d) { Tri(a, b, c); Tri(a, c, d); }
-            public Mesh Done(string name)
-            {
-                var m = new Mesh { name = name };
-                m.SetVertices(v); m.SetTriangles(t, 0); m.RecalculateNormals(); m.RecalculateBounds();
-                return m;
-            }
-        }
-
         static Mesh Save(Mesh m)
         {
-            if (!AssetDatabase.IsValidFolder(MeshDir)) AssetDatabase.CreateFolder("Assets/Meshes", "PresidentHouse");
-            m.name = m.name.Replace(',', '.');
+            if (!AssetDatabase.IsValidFolder(MeshDir)) AssetDatabase.CreateFolder("Assets/Meshes", "PresidentHouseStone");
             string path = MeshDir + "/" + m.name + ".asset";
             var existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
-            if (existing != null) { existing.Clear(); EditorUtility.CopySerialized(m, existing); existing.name = m.name; EditorUtility.SetDirty(existing); return existing; }
+            if (existing != null) { string n = m.name; existing.Clear(); EditorUtility.CopySerialized(m, existing); existing.name = n; EditorUtility.SetDirty(existing); return existing; }
             AssetDatabase.CreateAsset(m, path);
             return m;
         }
 
-        /// <summary>N-sided prism / frustum / pyramid along +y from y 0 to h (r1 = 0 gives a point).</summary>
-        static Mesh Prism(int sides, float r0, float r1, float h, string name, float startDeg = 0f)
+        /// <summary>Flat-shaded, vertex-coloured mesh builder (every triangle has its own vertices).</summary>
+        class MB
         {
-            var b = new MB { Centre = new Vector3(0, h * (r1 > 0 ? 0.5f : 0.25f), 0) };
-            Vector3 P(int i, float r, float y) { float a = (startDeg * Mathf.Deg2Rad) + i * Mathf.PI * 2f / sides; return new Vector3(Mathf.Sin(a) * r, y, Mathf.Cos(a) * r); }
-            for (int i = 0; i < sides; i++)
-            {
-                var a0 = P(i, r0, 0); var a1 = P(i + 1, r0, 0);
-                b.Tri(Vector3.zero, a0, a1);
-                if (r1 > 0) { var b0 = P(i, r1, h); var b1 = P(i + 1, r1, h); b.Quad(a0, a1, b1, b0); b.Tri(new Vector3(0, h, 0), b0, b1); }
-                else b.Tri(a0, a1, new Vector3(0, h, 0));
-            }
-            return Save(b.Done($"PH_{name}_{sides}_{r0:0.##}_{r1:0.##}_{h:0.##}"));
-        }
+            readonly List<Vector3> v = new List<Vector3>(); readonly List<Color> c = new List<Color>(); readonly List<int> t = new List<int>();
 
-        /// <summary>Faceted half-sphere (flattened to height h) sitting on y 0.</summary>
-        static Mesh Dome(int sides, int rings, float r, float h, string name)
-        {
-            var b = new MB { Centre = new Vector3(0, h * 0.35f, 0) };
-            Vector3 P(int i, int k) { float a = i * Mathf.PI * 2f / sides, phi = k * Mathf.PI * 0.5f / rings; float rr = Mathf.Cos(phi) * r; return new Vector3(Mathf.Sin(a) * rr, Mathf.Sin(phi) * h, Mathf.Cos(a) * rr); }
-            for (int i = 0; i < sides; i++)
+            public void Tri(Vector3 a, Vector3 b, Vector3 d, Color col, Vector3 outward)
             {
-                b.Tri(Vector3.zero, P(i, 0), P(i + 1, 0));
-                for (int k = 0; k < rings - 1; k++) b.Quad(P(i, k), P(i + 1, k), P(i + 1, k + 1), P(i, k + 1));
-                b.Tri(P(i, rings - 1), P(i + 1, rings - 1), new Vector3(0, h, 0));
+                if (Vector3.Dot(Vector3.Cross(b - a, d - a), outward) < 0) { var x = b; b = d; d = x; }
+                int i = v.Count; v.Add(a); v.Add(b); v.Add(d); c.Add(col); c.Add(col); c.Add(col); t.Add(i); t.Add(i + 1); t.Add(i + 2);
             }
-            return Save(b.Done($"PH_{name}_{sides}x{rings}_{r:0.##}_{h:0.##}"));
-        }
 
-        /// <summary>Triangular gable: base width w on y 0, apex at height h, depth d centred on z.</summary>
-        static Mesh Gable(float w, float h, float d, string name)
-        {
-            var b = new MB { Centre = new Vector3(0, h / 3f, 0) };
-            Vector3 L(float z) => new Vector3(-w / 2, 0, z);
-            Vector3 R(float z) => new Vector3(w / 2, 0, z);
-            Vector3 T(float z) => new Vector3(0, h, z);
-            float f = -d / 2, k = d / 2;
-            b.Tri(L(f), R(f), T(f)); b.Tri(L(k), R(k), T(k));
-            b.Quad(L(f), L(k), R(k), R(f)); b.Quad(L(f), T(f), T(k), L(k)); b.Quad(R(f), R(k), T(k), T(f));
-            return Save(b.Done($"PH_{name}_{w:0.##}_{h:0.##}_{d:0.##}"));
-        }
+            public void Quad(Vector3 a, Vector3 b, Vector3 cc, Vector3 d, Color col, Vector3 n) { Tri(a, b, cc, col, n); Tri(a, cc, d, col, n); }
 
-        /// <summary>Extruded star in the XY plane, thickness along z (front face at -z).</summary>
-        static Mesh Star(int points, float rOut, float rIn, float depth, string name)
-        {
-            var b = new MB { Centre = Vector3.zero };
-            int n = points * 2; var ring = new Vector3[n];
-            for (int i = 0; i < n; i++) { float a = i * Mathf.PI / points; float r = i % 2 == 0 ? rOut : rIn; ring[i] = new Vector3(Mathf.Sin(a) * r, Mathf.Cos(a) * r, 0); }
-            var f = Vector3.back * depth / 2; var k = Vector3.forward * depth / 2;
-            for (int i = 0; i < n; i++)
+            public void Box(Vector3 cen, Vector3 s, Color col) => Box(cen, s, col, Quaternion.identity);
+
+            public void Box(Vector3 cen, Vector3 s, Color col, Quaternion r)
             {
-                var a = ring[i]; var c = ring[(i + 1) % n];
-                b.Tri(f, a + f, c + f); b.Tri(k, a + k, c + k);
-                // Side faces: wind against the ring's midpoint direction, not the centre (concave notches).
-                b.Centre = (a + c) * 0.5f + Vector3.Cross(c - a, Vector3.forward).normalized * 0.01f;   // a point just inside this edge
-                b.Quad(a + f, c + f, c + k, a + k);
-                b.Centre = Vector3.zero;
+                // Grow every box by its own 0..4 mm so faces of neighbouring boxes never sit exactly in one plane (no z-fighting).
+                float e = 0.0005f * (boxCount++ % 9);
+                Vector3 h = s * 0.5f + new Vector3(e, e, e);
+                Vector3[] ax = { Vector3.right, Vector3.up, Vector3.forward };
+                for (int a = 0; a < 3; a++)
+                    for (int sg = -1; sg <= 1; sg += 2)
+                    {
+                        Vector3 n = ax[a] * sg, u = ax[(a + 1) % 3], w = ax[(a + 2) % 3];
+                        Vector3 P(float su, float sw) => cen + r * Vector3.Scale(n + u * su + w * sw, h);
+                        Quad(P(-1, -1), P(1, -1), P(1, 1), P(-1, 1), col, r * n);
+                    }
             }
-            return Save(b.Done($"PH_{name}_{points}_{rOut:0.##}_{rIn:0.##}_{depth:0.##}"));
+
+            public void Prism(Vector3 b, int sides, float r0, float r1, float h, Color col, float startDeg = 0f) => Prism(b, sides, r0, r1, h, col, Quaternion.identity, startDeg);
+
+            /// <summary>N-sided prism / frustum / cone from b along r*up (r1 = 0 gives a point).</summary>
+            public void Prism(Vector3 b, int sides, float r0, float r1, float h, Color col, Quaternion r, float startDeg = 0f)
+            {
+                Vector3 up = r * Vector3.up, top = b + up * h;
+                Vector3 P(int i, float rad, float y) { float a = startDeg * Mathf.Deg2Rad + i * Mathf.PI * 2f / sides; return b + r * new Vector3(Mathf.Sin(a) * rad, y, Mathf.Cos(a) * rad); }
+                Vector3 Out(Vector3 m) => m - (b + up * Vector3.Dot(m - b, up));
+                for (int i = 0; i < sides; i++)
+                {
+                    var a0 = P(i, r0, 0); var a1 = P(i + 1, r0, 0);
+                    if (r1 > 0)
+                    {
+                        var b0 = P(i, r1, h); var b1 = P(i + 1, r1, h);
+                        Quad(a0, a1, b1, b0, col, Out((a0 + a1 + b0 + b1) / 4f));
+                        Tri(top, b0, b1, col, up);
+                    }
+                    else Tri(a0, a1, top, col, Out((a0 + a1 + top) / 3f));
+                    Tri(b, a0, a1, col, -up);
+                }
+            }
+
+            /// <summary>Star-shaped polygon in the xy plane (around its centre), extruded from z0 to z1, moved by offset.</summary>
+            public void ExtrudeXY(Vector2[] pts, float z0, float z1, Color col, Vector3 offset)
+            {
+                var cen = Vector2.zero; foreach (var p in pts) cen += p; cen /= pts.Length;
+                Vector3 V(Vector2 p, float z) => offset + new Vector3(p.x, p.y, z);
+                var n0 = Vector3.forward * Mathf.Sign(z0 - z1); var n1 = -n0;
+                for (int i = 0; i < pts.Length; i++)
+                {
+                    var p0 = pts[i]; var p1 = pts[(i + 1) % pts.Length]; var m = (p0 + p1) / 2 - cen;
+                    Tri(V(cen, z0), V(p0, z0), V(p1, z0), col, n0);
+                    Tri(V(cen, z1), V(p0, z1), V(p1, z1), col, n1);
+                    Quad(V(p0, z0), V(p1, z0), V(p1, z1), V(p0, z1), col, new Vector3(m.x, m.y, 0));
+                }
+            }
+
+            public Mesh Done(string name)
+            {
+                var m = new Mesh { name = name };
+                if (v.Count > 65000) m.indexFormat = IndexFormat.UInt32;
+                m.SetVertices(v); m.SetColors(c); m.SetTriangles(t, 0); m.RecalculateNormals(); m.RecalculateBounds();
+                return m;
+            }
         }
 
         // ---------- Report ----------
@@ -433,15 +471,14 @@ namespace CoopGame.EditorTools
             var sb = new System.Text.StringBuilder();
             var bounds = new Bounds(model.position, Vector3.zero);
             foreach (var r in model.GetComponentsInChildren<Renderer>()) bounds.Encapsulate(r.bounds);
-            sb.AppendLine($"Built '{ModelName}': bounds min {bounds.min:F1} max {bounds.max:F1}, renderers {model.GetComponentsInChildren<Renderer>().Length}.");
-            // Ground heights under the podium corners (ignoring the house itself).
-            foreach (var lp in new[] { new Vector3(-10.5f, 0, 0), new Vector3(10.5f, 0, 0), new Vector3(-10.5f, 0, 14), new Vector3(10.5f, 0, 14), new Vector3(0, 0, 7) })
+            int verts = 0; foreach (var f in model.GetComponentsInChildren<MeshFilter>()) verts += f.sharedMesh.vertexCount;
+            sb.AppendLine($"Built '{ModelName}' at {model.position:F2}, rot {model.eulerAngles:F1}: world bounds min {bounds.min:F2} max {bounds.max:F2} size {bounds.size:F2}, {verts} verts, {lightCount} lights.");
+            foreach (var lp in new[] { new Vector3(-PX, 0, LayoutZ), new Vector3(PX, 0, LayoutZ), new Vector3(-PX, 0, LayoutZ + PZ1), new Vector3(PX, 0, LayoutZ + PZ1), new Vector3(0, 0, 0) })
             {
                 var wp = model.TransformPoint(lp) + Vector3.up * 40f;
                 foreach (var h in Physics.RaycastAll(wp, Vector3.down, 80f))
                     if (!h.collider.transform.IsChildOf(model)) { sb.AppendLine($"ground under {lp}: {h.point.y - model.position.y:F2} m ({h.collider.name})"); break; }
             }
-            // Scene objects poking into the house.
             var seen = new HashSet<string>();
             foreach (var c in model.GetComponentsInChildren<Collider>())
             {
