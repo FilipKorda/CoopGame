@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace CoopGame
 {
@@ -8,6 +9,8 @@ namespace CoopGame
         [Header("Antennas")]
         [SerializeField] AntennaRig[] antennas;
         [SerializeField] Spinner[] spinner;
+        [Tooltip("Server, once: every antenna points at the tower (e.g. play a cutscene).")]
+        [SerializeField] UnityEvent onAntennasAligned;
         bool spinnerStarted;
 
         [Header("Power Levers")]
@@ -59,6 +62,7 @@ namespace CoopGame
                     }
 
                     spinnerStarted = true;
+                    onAntennasAligned?.Invoke();
                 }
             }
 
