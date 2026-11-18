@@ -90,6 +90,16 @@ namespace CoopGame
         [Tooltip("How much the head turns back against the torso twist, so it keeps looking ahead (0..1).")]
         [SerializeField, Range(0f, 1f)] float headSteady = 0.8f;
 
+        [Header("Walk: weight (0 = light)")]
+        [Tooltip("Heavy footfall: as a foot lands the body drops this much more (metres) and comes up slowly.")]
+        [SerializeField] float stepImpact = 0f;
+        [Tooltip("The landing leg's knee gives this much (degrees) under the weight, the thigh and foot keep the foot flat.")]
+        [SerializeField] float impactKnee = 0f;
+        [Tooltip("The torso nods forward this much (degrees) with each footfall.")]
+        [SerializeField] float impactNod = 0f;
+        [Tooltip("Knees kept bent this much (degrees) the whole time it walks, the body lower to match (a heavy, careful walk).")]
+        [SerializeField] float walkKneeFlex = 0f;
+
         [Header("Idle stance (standing still)")]
         [SerializeField] bool useStance = true;
         [Tooltip("Seconds to settle back into the stance after stopping (leaving it for the walk takes 40% of this).")]
@@ -147,6 +157,14 @@ namespace CoopGame
                  "wall from nearly straight arms (only the figure moves, not the player's collider).")]
         [SerializeField] float hangCloser = 0.33f;
         [SerializeField] float hangLower = 0.15f;
+        [Tooltip("Gap between the front of the torso and the wall while hanging (metres), worked out from the body's own " +
+                 "torso. Below 0 = use Hang Closer instead.")]
+        [SerializeField] float hangWallGap = 0.04f;
+        [Tooltip("How straight the arms are while hanging (1 = fully straight): the body hangs as low as that lets it, " +
+                 "worked out from the body's own arms. 0 = use Hang Lower instead.")]
+        [SerializeField, Range(0f, 1f)] float hangArmStretch = 0.96f;
+        [Tooltip("The hands reach this far over the ledge edge onto its top (metres), so they hold on instead of touching the corner.")]
+        [SerializeField] float hangGripOver = 0.04f;
         [Tooltip("The point of the hand that holds on, measured from the elbow joint (metres), and how far above the " +
                  "ledge edge it rests.")]
         [SerializeField] Vector3 gripOffset = new Vector3(0f, -0.36f, 0.006f);
@@ -160,6 +178,14 @@ namespace CoopGame
         [Tooltip("Legs trailing behind the way it moves along the ledge, and swaying with the hands (degrees).")]
         [SerializeField] float shimmyLegTrail = 8f;
         [SerializeField] float shimmyLegSway = 3f;
+        [Tooltip("How far behind the hands the legs swing (part of a cycle): they hang and follow the body like a pendulum.")]
+        [SerializeField, Range(0f, 0.5f)] float shimmyLegLag = 0.15f;
+        [Tooltip("While one hand moves on, the body hangs from the other: it sinks this far and swings this far towards " +
+                 "the holding hand (metres).")]
+        [SerializeField] float shimmySag = 0.035f;
+        [SerializeField] float shimmyShift = 0.05f;
+        [Tooltip("Seconds to start (and stop) moving along the ledge.")]
+        [SerializeField] float shimmyBlend = 0.25f;
 
         [Header("Zipline")]
         [Tooltip("Riding a zipline: hands this high above the feet (just under the cable; the line's Hang Depth) and this far apart.")]
@@ -180,7 +206,11 @@ namespace CoopGame
                  "doesn't swing it round), then turns to the new way at this speed (degrees per second).")]
         [SerializeField] float flipTurnAfter = 540f;
         [Tooltip("Tight tuck during the flip: knees to the chest, arms around the shins.")]
-        [SerializeField] BodyPose flipTuck = new BodyPose(new Vector3(-100f, 0f, -6f), 120f, 30f, new Vector3(-95f, 0f, 6f), 115f, 30f, new Vector3(-55f, 0f, -12f), 75f, new Vector3(-55f, 0f, 12f), 75f, 25f);
+        [SerializeField] BodyPose flipTuck = new BodyPose(new Vector3(-140f, 0f, -4f), 155f, 45f, new Vector3(-137f, 0f, 4f), 153f, 45f, new Vector3(-45f, 0f, 15f), 120f, new Vector3(-45f, 0f, -15f), 120f, 55f);
+        [Tooltip("How soon the figure rolls into the ball and how long it stays in it (1 = only in the very middle of the flip, higher = sooner and longer).")]
+        [SerializeField] float flipTuckHold = 2.6f;
+        [Tooltip("Head tucked down to the knees during the flip (degrees).")]
+        [SerializeField] float flipHeadTuck = 40f;
         [Tooltip("Double jump while aiming and holding A or D: a cartwheel that way instead of the flip.")]
         [SerializeField] bool useCartwheel = true;
         [Tooltip("How sideways the stick must push for a cartwheel (0..1; A or D alone = 1, with W or S as well = 0.7).")]
@@ -217,6 +247,7 @@ namespace CoopGame
         Vector3 lastPosition;
         float phase, amount, moving, breathTime;
         Vector3 upperBodyBase, hipsBase;
+        float thighLength, shinLength;
         bool snap = true;
         // Direction of travel in the figure's own frame (smoothed), and how much the feet must tilt back against the lean.
         Vector3 travelDir = Vector3.forward;
@@ -244,6 +275,8 @@ namespace CoopGame
         // Whole-figure lean and offset (eased), the flip turns them around the waist.
         Quaternion leanRotation = Quaternion.identity;
         Vector3 rootOffset;
+        // Front of the torso (see TorsoFront); NaN = not worked out yet for this body.
+        float torsoFront = float.NaN;
         readonly RaycastHit[] groundHits = new RaycastHit[8];
         // What the feet stood on last frame (cutscene stand-ins only), and where on it: when that moves (a boat), it
         // carries the figure, which isn't walking.
@@ -270,11 +303,62 @@ namespace CoopGame
             }
         }
 
+        /// <summary>How the figure walks: one set per body (see <see cref="PlayerBody"/>), e.g. a heavy man, a light woman.</summary>
+        [System.Serializable]
+        public class Gait
+        {
+            public float stepLength, fullSwingSpeed, swingBuildUp, hipSwing, kneeBend, shoulderSwing, elbowRest, elbowWalk,
+                armSpread, legSpread, bob, walkLean, torsoLean, hipTwist, hipDrop, torsoTwist, torsoRoll, torsoShift, headSteady,
+                stepImpact, impactKnee, impactNod, walkKneeFlex, smoothing;
+        }
+
+        public Gait GetGait() => new Gait
+        {
+            stepLength = stepLength, fullSwingSpeed = fullSwingSpeed, swingBuildUp = swingBuildUp, hipSwing = hipSwing, kneeBend = kneeBend,
+            shoulderSwing = shoulderSwing, elbowRest = elbowRest, elbowWalk = elbowWalk, armSpread = armSpread, legSpread = legSpread,
+            bob = bob, walkLean = walkLean, torsoLean = torsoLean, hipTwist = hipTwist, hipDrop = hipDrop, torsoTwist = torsoTwist,
+            torsoRoll = torsoRoll, torsoShift = torsoShift, headSteady = headSteady, stepImpact = stepImpact, impactKnee = impactKnee,
+            impactNod = impactNod, walkKneeFlex = walkKneeFlex, smoothing = smoothing,
+        };
+
+        public void SetGait(Gait g)
+        {
+            if (g == null) return;
+            stepLength = g.stepLength; fullSwingSpeed = g.fullSwingSpeed; swingBuildUp = g.swingBuildUp; hipSwing = g.hipSwing; kneeBend = g.kneeBend;
+            shoulderSwing = g.shoulderSwing; elbowRest = g.elbowRest; elbowWalk = g.elbowWalk; armSpread = g.armSpread; legSpread = g.legSpread;
+            bob = g.bob; walkLean = g.walkLean; torsoLean = g.torsoLean; hipTwist = g.hipTwist; hipDrop = g.hipDrop; torsoTwist = g.torsoTwist;
+            torsoRoll = g.torsoRoll; torsoShift = g.torsoShift; headSteady = g.headSteady; stepImpact = g.stepImpact; impactKnee = g.impactKnee;
+            impactNod = g.impactNod; walkKneeFlex = g.walkKneeFlex; smoothing = g.smoothing;
+        }
+
+        /// <summary>The body's measurements the rig works with (see <see cref="PlayerBody"/>).</summary>
+        public void GetBody(out Vector3 restHips, out Vector3 restUpperBody, out Vector3 gripOffset, out float hangLower)
+        {
+            restHips = this.restHips; restUpperBody = this.restUpperBody; gripOffset = this.gripOffset; hangLower = this.hangLower;
+        }
+
+        /// <summary>
+        /// Another body was put on the figure (other meshes and joint positions): its rest heights, where its hands
+        /// hold on and how far it hangs below a ledge. The next pose snaps to it.
+        /// </summary>
+        public void SetBody(Vector3 restHips, Vector3 restUpperBody, Vector3 gripOffset, float hangLower)
+        {
+            this.restHips = restHips; this.restUpperBody = restUpperBody; this.gripOffset = gripOffset; this.hangLower = hangLower;
+            torsoFront = float.NaN;
+            CaptureRest();
+            if (hips != null) hips.localPosition = hipsBase;
+            if (upperBody != null) upperBody.localPosition = upperBodyBase;
+            snap = true;
+        }
+
         void CaptureRest()
         {
             if (upperBody != null) upperBodyBase = restUpperBody != Vector3.zero ? restUpperBody : upperBody.localPosition;
             if (hips != null) hipsBase = restHips != Vector3.zero ? restHips : hips.localPosition;
             joints = new[] { hipLeft, kneeLeft, ankleLeft, hipRight, kneeRight, ankleRight, shoulderLeft, elbowLeft, shoulderRight, elbowRight, hips, upperBody };
+            // Leg lengths (hip to knee, knee to ankle), for how far bent knees lower the body.
+            thighLength = kneeLeft != null ? kneeLeft.localPosition.magnitude : 0f;
+            shinLength = ankleLeft != null ? ankleLeft.localPosition.magnitude : 0f;
         }
 
         /// <summary>Shows the standing stance right away (to see it in the editor without playing).</summary>
@@ -417,7 +501,7 @@ namespace CoopGame
                 shimmyDirection = Mathf.Sign(alongSpeed);
                 shimmyProgress = Mathf.Repeat(shimmyProgress + Mathf.Abs(alongSpeed) * dt / Mathf.Max(0.1f, shimmyCycle), 1f);
             }
-            shimmy = Mathf.MoveTowards(shimmy, shimmying ? 1f : 0f, dt / 0.12f);
+            shimmy = Mathf.MoveTowards(shimmy, shimmying ? 1f : 0f, dt / Mathf.Max(0.01f, shimmyBlend));
 
             // A double jump starts a front flip. It finishes fast if the figure lands first and stops on a ledge.
             if (movement != null)
@@ -533,9 +617,19 @@ namespace CoopGame
             footPitch = walkLean * amount * leanForward;
             footRoll = walkLean * amount * travelDir.x;
 
+            // Footfalls: the right foot lands when the legs are furthest apart with it in front (phase PI/2), the left
+            // at 3PI/2. Each landing quickly takes the weight, then eases off.
+            float cycle = phase / (Mathf.PI * 2f);
+            float landR = Footfall(cycle - 0.25f) * amount, landL = Footfall(cycle - 0.75f) * amount;
+            float impact = Mathf.Max(landL, landR);
+            // Knees giving: always a little while walking, more on the leg that just took the weight.
+            float giveL = landL * impactKnee + walkKneeFlex * amount, giveR = landR * impactKnee + walkKneeFlex * amount;
+            // How far that lowers the body (thigh and shin each tilt by half the knee bend), so the feet stay down.
+            float half = Mathf.Max(giveL, giveR) * 0.5f * Mathf.Deg2Rad;
+            float kneeDrop = (thighLength + shinLength) * (1f - Mathf.Cos(half));
             // On the ground: stance and walk.
-            GroundLeg(HipL, KneeL, AnkleL, phase, -legSpread, stanceHipLeft, stanceKneeLeft, stanceAnkleLeft);
-            GroundLeg(HipR, KneeR, AnkleR, phase + Mathf.PI, legSpread, stanceHipRight, stanceKneeRight, stanceAnkleRight);
+            GroundLeg(HipL, KneeL, AnkleL, phase, -legSpread, stanceHipLeft, stanceKneeLeft, stanceAnkleLeft, giveL);
+            GroundLeg(HipR, KneeR, AnkleR, phase + Mathf.PI, legSpread, stanceHipRight, stanceKneeRight, stanceAnkleRight, giveR);
             GroundArm(ShoulderL, ElbowL, phase + Mathf.PI, -armSpread, stanceShoulderLeft + new Vector3(0f, 0f, -1.5f * breathe), stanceElbowLeft);
             GroundArm(ShoulderR, ElbowR, phase, armSpread, stanceShoulderRight + new Vector3(0f, 0f, 1.5f * breathe), stanceElbowRight);
             // Phase 0 = left foot under the body (standing on it), PI = right foot; sin(phase) < 0 = left leg in front.
@@ -544,10 +638,11 @@ namespace CoopGame
             // Hips turn towards the leg that steps forward; the side of the swinging leg drops a little.
             groundPose[HipsJ] = Mix(Quaternion.Euler(0f, -s * hipTwist * amount, -c * hipDrop * amount), Quaternion.Euler(stanceHips));
             // Torso leans a bit more forward, turns against the hips and leans over the standing leg.
-            groundPose[Torso] = Mix(Quaternion.Euler(torsoLean * amount, s * torsoTwist * amount, c * torsoRoll * amount), Quaternion.Euler(stanceUpperBody));
+            groundPose[Torso] = Mix(Quaternion.Euler(torsoLean * amount + impactNod * impact, s * torsoTwist * amount, c * torsoRoll * amount), Quaternion.Euler(stanceUpperBody));
             groundPose[Head] = Mix(Quaternion.Euler(0f, -s * torsoTwist * amount * headSteady, 0f), Quaternion.Euler(0f, stanceHeadTurn, 0f));
-            // The body dips while the legs are furthest apart and is highest over the standing foot.
-            float dip = -bob * amount * s * s * moving;
+            // The body dips while the legs are furthest apart and is highest over the standing foot; a heavy body also
+            // drops onto each foot as it lands.
+            float dip = (-bob * amount * s * s - stepImpact * impact - kneeDrop) * moving;
             Vector3 hipsGround = hipsBase + Vector3.down * (stanceDrop * still) + Vector3.up * dip;
             Vector3 upperGround = upperBodyBase + Vector3.up * dip + Vector3.left * (c * torsoShift * walk)
                 + Vector3.up * ((breath * breathe - stanceDrop) * still);
@@ -565,8 +660,12 @@ namespace CoopGame
                 {
                     Fill(poseB, hanging);
                     // Moving along the ledge: the legs trail behind and sway with the hands.
-                    float legRoll = (-shimmyDirection * shimmyLegTrail + Mathf.Sin(shimmyProgress * Mathf.PI * 4f) * shimmyLegSway) * shimmy;
-                    poseB[HipsJ] = Quaternion.Euler(0f, 0f, legRoll);
+                    // Once per cycle (the body swings to one holding hand, then the other), a little behind the body.
+                    float legRoll = (-shimmyDirection * shimmyLegTrail + Mathf.Sin((shimmyProgress - shimmyLegLag) * Mathf.PI * 2f) * shimmyLegSway) * shimmy;
+                    // Only the legs swing (each from its hip); the pelvis stays on the torso.
+                    Quaternion legSwing = Quaternion.Euler(0f, 0f, legRoll);
+                    poseB[HipL] = legSwing * poseB[HipL];
+                    poseB[HipR] = legSwing * poseB[HipR];
                     for (int i = 0; i < JointCount; i++) airPose[i] = Quaternion.Slerp(airPose[i], poseB[i], hangPose);
                 }
             }
@@ -574,8 +673,9 @@ namespace CoopGame
             float flipT = flipClock >= 0f ? Mathf.Clamp01(flipClock / Mathf.Max(0.05f, flipTime)) : -1f;
             if (flipT >= 0f && air > 0.001f)
             {
-                float tuck = Mathf.Clamp01(Mathf.Sin(flipT * Mathf.PI) * (flipSide != 0f ? 2.5f : 1.6f));
+                float tuck = Mathf.Clamp01(Mathf.Sin(flipT * Mathf.PI) * (flipSide != 0f ? 2.5f : flipTuckHold));
                 Fill(poseB, flipSide != 0f ? cartwheel : flipTuck);
+                if (flipSide == 0f) poseB[Head] = Quaternion.Euler(flipHeadTuck, 0f, 0f);
                 for (int i = 0; i < JointCount; i++) airPose[i] = Quaternion.Slerp(airPose[i], poseB[i], tuck);
             }
             if (land > 0.001f) Fill(landPose, landing);
@@ -605,7 +705,7 @@ namespace CoopGame
             float lean = moving * (1f - Mathf.Max(hang, zip));
             leanRotation = Quaternion.Slerp(leanRotation, Quaternion.Euler(footPitch * lean, 0f, -footRoll * lean), k);
             // Hanging: the figure moves towards the wall and down (and the hands go onto the ledge, below).
-            rootOffset = Vector3.Lerp(rootOffset, new Vector3(0f, -hangLower, hangCloser) * hang, k);
+            rootOffset = Vector3.Lerp(rootOffset, HangOffset() * hang, k);
             // Front flip: one full turn forward around the waist, fastest in the middle.
             float turn = flipT >= 0f ? 360f * flipT * flipT * (3f - 2f * flipT) : 0f;
             // Flip: forward around the waist; cartwheel: sideways, the head going the way it moves.
@@ -657,7 +757,76 @@ namespace CoopGame
                 along *= shimmyDirection * shimmy;
                 lift *= shimmy;
             }
-            return new Vector3(side * hangHandSpacing + along, hangHandHeight + gripAbove + lift, hangHandReach - lift * 0.5f);
+            return new Vector3(side * hangHandSpacing + along, hangHandHeight + gripAbove + lift, hangHandReach + hangGripOver - lift * 0.5f);
+        }
+
+        // How far the hanging figure moves (in its parent's frame): towards the wall until the torso is Hang Wall Gap
+        // from it, down until the arms are Hang Arm Stretch straight; moving along the ledge it sinks onto the holding
+        // hand and swings towards it.
+        Vector3 HangOffset()
+        {
+            float closer = hangCloser, lower = hangLower;
+            Transform frame = transform.parent;
+            if (hangWallGap >= 0f && upperBody != null)
+            {
+                if (float.IsNaN(torsoFront)) torsoFront = TorsoFront();
+                closer = hangHandReach - hangWallGap - (upperBodyBase.z + torsoFront);
+            }
+            if (hangArmStretch > 0f && frame != null && shoulderLeft != null && shoulderRight != null)
+            {
+                // The higher of the two: both hands must reach.
+                lower = Mathf.Min(HangDrop(frame, shoulderLeft, elbowLeft, -1f, closer), HangDrop(frame, shoulderRight, elbowRight, 1f, closer));
+                if (lower == float.MaxValue) lower = hangLower;
+            }
+            Vector3 offset = new Vector3(0f, -lower, closer);
+            if (shimmy > 0.001f)
+            {
+                float left = HandMoving(-1f), right = HandMoving(1f);
+                offset += new Vector3((left - right) * shimmyShift, -Mathf.Max(left, right) * shimmySag, 0f) * shimmy;
+            }
+            return offset;
+        }
+
+        // How far down the figure can hang for this arm to be Hang Arm Stretch straight to its hold on the ledge.
+        float HangDrop(Transform frame, Transform shoulder, Transform elbow, float side, float closer)
+        {
+            if (elbow == null) return float.MaxValue;
+            // The shoulder where it would be without any hang offset (the figure stays upright while hanging).
+            Vector3 sh = frame.InverseTransformPoint(shoulder.position) - transform.localPosition;
+            float arm = frame.InverseTransformVector(shoulder.TransformVector(elbow.localPosition)).magnitude
+                      + frame.InverseTransformVector(elbow.TransformVector(gripOffset)).magnitude;
+            Vector3 hand = new Vector3(side * hangHandSpacing, hangHandHeight + gripAbove, hangHandReach + hangGripOver);
+            float dx = hand.x - sh.x, dz = hand.z - (sh.z + closer);
+            float dy = Mathf.Sqrt(Mathf.Max(0f, arm * arm * hangArmStretch * hangArmStretch - dx * dx - dz * dz));
+            return sh.y - (hand.y - dy);
+        }
+
+        // 0..1: how far into moving on to its next hold a hand is (0 while it holds still on the ledge).
+        float HandMoving(float side)
+        {
+            float u = Mathf.Repeat(shimmyProgress + (side * shimmyDirection > 0f ? 0f : 0.5f), 1f);
+            return u < shimmyHold ? 0f : Mathf.Sin((u - shimmyHold) / (1f - shimmyHold) * Mathf.PI);
+        }
+
+        // Front of the torso (chest, belly, pelvis) in front of the upper body joint (metres), from its part meshes.
+        float TorsoFront()
+        {
+            float front = 0.12f;
+            bool found = false;
+            foreach (var mf in upperBody.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (mf.sharedMesh == null) continue;
+                string n = mf.sharedMesh.name;
+                if (!n.Contains("Chest") && !n.Contains("Abdomen")) continue;
+                Bounds b = mf.sharedMesh.bounds;
+                for (int c = 0; c < 8; c++)
+                {
+                    Vector3 corner = b.center + Vector3.Scale(b.extents, new Vector3((c & 1) == 0 ? -1 : 1, (c & 2) == 0 ? -1 : 1, (c & 4) == 0 ? -1 : 1));
+                    float z = upperBody.InverseTransformPoint(mf.transform.TransformPoint(corner)).z;
+                    if (!found || z > front) { front = z; found = true; }
+                }
+            }
+            return front;
         }
 
         // Turns the shoulder and bends the elbow so the hand's grip point lands on target (two-joint reach), the elbow
@@ -696,15 +865,25 @@ namespace CoopGame
         Quaternion Mix(Quaternion walk, Quaternion stance) => Quaternion.Slerp(stance, walk, moving);
 
         // Positive X turns a limb's lower end backwards. Swing forward = negative.
-        void GroundLeg(int hip, int knee, int ankle, float p, float spread, Vector3 stanceHip, float stanceKnee, Vector3 stanceAnkle)
+        // give: the knee giving under the weight as the foot lands (degrees); thigh and foot share it so the foot stays flat.
+        void GroundLeg(int hip, int knee, int ankle, float p, float spread, Vector3 stanceHip, float stanceKnee, Vector3 stanceAnkle, float give)
         {
             float swing = Mathf.Sin(p) * hipSwing * amount;                     // + = leg back
             // The knee bends while the leg comes forward through the air and is straight when it plants.
             float bend = Mathf.Max(0f, Mathf.Sin(p - Mathf.PI * 0.35f)) * kneeBend * amount;
-            groundPose[hip] = Mix(Quaternion.Euler(swing - bend * 0.25f, 0f, spread), Quaternion.Euler(stanceHip));
-            groundPose[knee] = Mix(Quaternion.Euler(bend, 0f, 0f), Quaternion.Euler(stanceKnee, 0f, 0f));
+            groundPose[hip] = Mix(Quaternion.Euler(swing - bend * 0.25f - give * 0.5f, 0f, spread), Quaternion.Euler(stanceHip));
+            groundPose[knee] = Mix(Quaternion.Euler(bend + give, 0f, 0f), Quaternion.Euler(stanceKnee, 0f, 0f));
             // The lean would tip the feet over: the ankles take it back out.
-            groundPose[ankle] = Mix(Quaternion.Euler(-footPitch, 0f, footRoll), Quaternion.Euler(stanceAnkle));
+            groundPose[ankle] = Mix(Quaternion.Euler(-footPitch - give * 0.5f, 0f, footRoll), Quaternion.Euler(stanceAnkle));
+        }
+
+        // Weight coming onto a foot that just landed (t = cycle since it landed, 0..1 per full cycle): quick, then easing off.
+        static float Footfall(float t)
+        {
+            t = Mathf.Repeat(t, 1f);
+            if (t < 0.07f) return Mathf.SmoothStep(0f, 1f, t / 0.07f);
+            if (t < 0.4f) return 1f - Mathf.SmoothStep(0f, 1f, (t - 0.07f) / 0.33f);
+            return 0f;
         }
 
         // spread: roll that holds the limb away from the body (sign per side).

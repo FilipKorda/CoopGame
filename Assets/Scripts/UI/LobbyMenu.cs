@@ -12,13 +12,21 @@ namespace CoopGame
     /// Main menu of the bootstrap scene, built in code (uGUI). Flow for two players:
     /// A clicks "Utwórz lobby" and gets the lobby code to send to B (the invitation) and a "Graj" button.
     /// B clicks "Dołącz kodem", pastes the code and accepts the invitation, which joins the lobby (Relay).
-    /// In the lobby each player toggles "Gotowy"; the host's "Graj" works only once both are ready and connected,
+    /// In the lobby each player picks a character (man or woman: the player's body, see <see cref="PlayerBody"/>) and
+    /// toggles "Gotowy"; the host's "Graj" works only once both are ready, connected and have different characters,
     /// then the host loads the level for both (see <see cref="NetworkBootstrap.StartGameFromLobby"/>).
     /// Lives in the bootstrap scene, so it disappears with it when the level loads.
     /// </summary>
     public class LobbyMenu : MonoBehaviour
     {
         const string ReadyKey = "ready";
+        // Lobby player property: the character picked ("0" = man, "1" = woman; PlayerBody's body index).
+        const string BodyKey = "body";
+        // The character last picked on this machine: picked again in the next lobby if the other player hasn't it.
+        const string BodyPrefKey = "CoopGame.Character";
+        static readonly string[] BodyNames = { "Mężczyzna", "Kobieta" };
+        static readonly Color ButtonColor = new(0.25f, 0.45f, 0.75f), ButtonHover = new(0.33f, 0.55f, 0.88f);
+        static readonly Color PickedColor = new(0.2f, 0.6f, 0.32f), PickedHover = new(0.27f, 0.7f, 0.4f);
 
         NetworkBootstrap bootstrap;
         Font font;
@@ -26,9 +34,13 @@ namespace CoopGame
         Text statusText, inviteText, codeText, playersText, startText, waitText, readyLabel;
         InputField codeInput, nameInput;
         Button createButton, joinOpenButton, backButton, nextButton, acceptButton, readyButton, playButton;
+        Button[] bodyButtons;
         GameObject hostOnly;
         string pendingCode;
-        bool savingReady;
+        // Saving this player's lobby data (ready / character): one save at a time.
+        bool saving;
+        // The character last handed to PlayerBody, and the one the buttons show as picked.
+        int sentBody = -1, markedBody = -2;
 
         public static LobbyMenu Create(NetworkBootstrap bootstrap)
         {
@@ -82,6 +94,22 @@ namespace CoopGame
             codeText.text = session.Code ?? "...";
 
             var players = session.Players;
+            var me = session.CurrentPlayer;
+            // No character yet (just made / joined the lobby): the last one picked here if it's free, else a free one.
+            if (me != null && Body(me) < 0 && !saving) SaveBody(DefaultBody(session));
+            int myBody = me != null ? Body(me) : -1;
+            if (myBody >= 0 && myBody != sentBody)
+            {
+                sentBody = myBody;
+                PlayerBody.ChooseLocal(myBody);
+            }
+            if (myBody != markedBody)
+            {
+                markedBody = myBody;
+                for (int b = 0; b < bodyButtons.Length; b++) MarkPicked(bodyButtons[b], b == myBody);
+            }
+            foreach (var button in bodyButtons) button.interactable = !saving;
+
             var lines = new System.Text.StringBuilder();
             for (int i = 0; i < session.MaxPlayers; i++)
             {
@@ -91,15 +119,17 @@ namespace CoopGame
                     continue;
                 }
                 var player = players[i];
-                string tags = (player.Id == session.Host ? "  [Host]" : "") + (player.Id == session.CurrentPlayer?.Id ? "  (Ty)" : "");
+                string tags = (player.Id == session.Host ? "  [Host]" : "") + (player.Id == me?.Id ? "  (Ty)" : "");
+                int body = Body(player);
+                string character = body >= 0 ? BodyNames[body] : "<color=#888888>wybiera postać...</color>";
                 string ready = IsReady(player) ? "<color=#5BD16A>GOTOWY</color>" : "<color=#E0A040>nie gotowy</color>";
-                lines.AppendLine($"{i + 1}.  {DisplayName(player, i)}{tags}   —   {ready}");
+                lines.AppendLine($"{i + 1}.  {DisplayName(player, i)}{tags}  —  {character}  —  {ready}");
             }
             playersText.text = lines.ToString().TrimEnd();
 
-            bool meReady = session.CurrentPlayer != null && IsReady(session.CurrentPlayer);
+            bool meReady = me != null && IsReady(me);
             readyLabel.text = meReady ? "Nie gotowy" : "Gotowy";
-            readyButton.interactable = !savingReady;
+            readyButton.interactable = !saving;
 
             bool isHost = session.IsHost;
             hostOnly.SetActive(isHost);
@@ -108,12 +138,17 @@ namespace CoopGame
 
             bool full = players.Count >= session.MaxPlayers;
             bool allReady = full && players.All(IsReady);
+            // Each player a different character (and every one picked).
+            bool picked = players.All(p => Body(p) >= 0);
+            bool different = picked && players.Select(Body).Distinct().Count() == players.Count;
             // Relay: the other player must also be connected to the host's game before the level loads.
             bool connected = bootstrap.Network.IsServer && bootstrap.Network.ConnectedClientsIds.Count >= players.Count;
-            playButton.interactable = allReady && connected;
+            playButton.interactable = allReady && different && connected;
 
             waitText.gameObject.SetActive(!isHost || !playButton.interactable);
             waitText.text = !full ? "Czekamy, aż drugi gracz dołączy."
+                : !picked ? "Czekamy na wybór postaci."
+                : !different ? "Wybierzcie różne postacie: jeden gracz mężczyznę, drugi kobietę."
                 : !allReady ? "Obaj gracze muszą być gotowi."
                 : isHost ? "Łączenie z drugim graczem..."
                 : "Czekamy, aż host kliknie „Graj”.";
@@ -121,6 +156,29 @@ namespace CoopGame
 
         static bool IsReady(IReadOnlyPlayer player) =>
             player.Properties != null && player.Properties.TryGetValue(ReadyKey, out var p) && p?.Value == "1";
+
+        // The character the player picked (index into BodyNames), or -1.
+        static int Body(IReadOnlyPlayer player) =>
+            player.Properties != null && player.Properties.TryGetValue(BodyKey, out var p) && int.TryParse(p?.Value, out int b)
+            && b >= 0 && b < BodyNames.Length ? b : -1;
+
+        static int DefaultBody(ISession session)
+        {
+            bool Taken(int b) => session.Players.Any(p => p.Id != session.CurrentPlayer.Id && Body(p) == b);
+            int preferred = PlayerPrefs.GetInt(BodyPrefKey, -1);
+            if (preferred >= 0 && preferred < BodyNames.Length && !Taken(preferred)) return preferred;
+            for (int b = 0; b < BodyNames.Length; b++)
+                if (!Taken(b)) return b;
+            return 0;
+        }
+
+        static void MarkPicked(Button button, bool picked)
+        {
+            var colors = button.colors;
+            colors.normalColor = colors.selectedColor = picked ? PickedColor : ButtonColor;
+            colors.highlightedColor = picked ? PickedHover : ButtonHover;
+            button.colors = colors;
+        }
 
         static string DisplayName(IReadOnlyPlayer player, int index)
         {
@@ -187,16 +245,37 @@ namespace CoopGame
         async void OnToggleReady()
         {
             var session = Session;
-            if (session?.CurrentPlayer == null || savingReady) return;
+            if (session?.CurrentPlayer == null || saving) return;
             bool ready = !IsReady(session.CurrentPlayer);
-            savingReady = true;
+            saving = true;
             try
             {
                 session.CurrentPlayer.SetProperty(ReadyKey, new PlayerProperty(ready ? "1" : "0", VisibilityPropertyOptions.Member));
                 await session.SaveCurrentPlayerDataAsync();
             }
             catch (Exception e) { Debug.LogException(e); }
-            finally { savingReady = false; }
+            finally { saving = false; }
+        }
+
+        // The player clicked a character: remembered on this machine for the next lobby.
+        void OnPickBody(int body)
+        {
+            PlayerPrefs.SetInt(BodyPrefKey, body);
+            SaveBody(body);
+        }
+
+        async void SaveBody(int body)
+        {
+            var session = Session;
+            if (session?.CurrentPlayer == null || saving || Body(session.CurrentPlayer) == body) return;
+            saving = true;
+            try
+            {
+                session.CurrentPlayer.SetProperty(BodyKey, new PlayerProperty(body.ToString(), VisibilityPropertyOptions.Member));
+                await session.SaveCurrentPlayerDataAsync();
+            }
+            catch (Exception e) { Debug.LogException(e); }
+            finally { saving = false; }
         }
 
         void OnPlay()
@@ -278,7 +357,7 @@ namespace CoopGame
             MakeButton(inviteRow, "Odrzuć", OnDecline);
 
             // Lobby
-            lobbyPanel = Panel(root, "Lobby", 760);
+            lobbyPanel = Panel(root, "Lobby", 900);
             MakeLabel(lobbyPanel.transform, "Lobby", 48, FontStyle.Bold, 70);
             hostOnly = new GameObject("HostInvite", typeof(RectTransform));
             hostOnly.transform.SetParent(lobbyPanel.transform, false);
@@ -299,6 +378,15 @@ namespace CoopGame
             MakeLabel(lobbyPanel.transform, "Gracze", 26, FontStyle.Bold, 36);
             playersText = MakeLabel(lobbyPanel.transform, "", 26, FontStyle.Normal, 90);
             playersText.alignment = TextAnchor.MiddleLeft;
+            Space(lobbyPanel.transform, 10);
+            MakeLabel(lobbyPanel.transform, "Twoja postać", 26, FontStyle.Bold, 36);
+            var bodyRow = Row(lobbyPanel.transform, 60);
+            bodyButtons = new Button[BodyNames.Length];
+            for (int b = 0; b < BodyNames.Length; b++)
+            {
+                int body = b;
+                bodyButtons[b] = MakeButton(bodyRow, BodyNames[b], () => OnPickBody(body));
+            }
             Space(lobbyPanel.transform, 10);
             readyButton = MakeButton(lobbyPanel.transform, "Gotowy", OnToggleReady);
             readyLabel = readyButton.GetComponentInChildren<Text>();
