@@ -5,10 +5,11 @@ using UnityEngine.Events;
 namespace CoopGame
 {
     /// <summary>
-    /// A level task: done once every listed obstacle is destroyed and every listed beam lever (or wheel) is turned.
+    /// A level task: done once every listed obstacle is destroyed, every listed beam lever (or wheel) is turned and
+    /// every listed broken pipe (<see cref="RepairablePipe"/>) is repaired.
     /// Then it switches on its <see cref="showWhenDone"/> objects (e.g. water pouring from pipes), every player gets
     /// a message, and <see cref="onDone"/> runs on the server. Not networked itself: it reads the obstacles' and
-    /// levers' shared state, so every client gets there at the same moment, a player joining later included.
+    /// levers' (and pipes') shared state, so every client gets there at the same moment, a player joining later included.
     /// </summary>
     public class TaskObjective : MonoBehaviour
     {
@@ -16,6 +17,8 @@ namespace CoopGame
         [SerializeField] Damageable[] destroy;
         [Tooltip("Must all be turned all the way.")]
         [SerializeField] PowerLever[] turn;
+        [Tooltip("Broken pipes that must all be put back (two players with the wrench beam).")]
+        [SerializeField] RepairablePipe[] repair;
         [Tooltip("Switched on when the task is done (kept off until then).")]
         [SerializeField] GameObject[] showWhenDone;
         [SerializeField] string doneMessage = "Zadanie wykonane — woda płynie!";
@@ -37,6 +40,19 @@ namespace CoopGame
                 if (destroy != null)
                     foreach (var obstacle in destroy)
                         if (obstacle != null && (!obstacle.IsSpawned || !obstacle.IsDead)) left++;
+                return left;
+            }
+        }
+
+        /// <summary>Broken pipes not repaired yet.</summary>
+        public int PipesLeft
+        {
+            get
+            {
+                int left = 0;
+                if (repair != null)
+                    foreach (var pipe in repair)
+                        if (pipe != null && !(pipe.IsSpawned && pipe.IsRepaired)) left++;
                 return left;
             }
         }
@@ -64,7 +80,7 @@ namespace CoopGame
             if (done) return;
             var network = NetworkManager.Singleton;
             if (network == null || !network.IsListening) return;
-            if (ObstaclesLeft > 0 || LeversLeft > 0) return;
+            if (ObstaclesLeft > 0 || LeversLeft > 0 || PipesLeft > 0) return;
             done = true;
             doneAt = Time.time;
             Show(true);

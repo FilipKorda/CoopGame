@@ -13,12 +13,37 @@ namespace CoopGame
     {
         [SerializeField] BeamSwitch[] switches;
         [SerializeField] MechanismMover[] movers;
+        [Tooltip("Hinged doors (not networked themselves) opened on every client when it fires, a player joining later included.")]
+        [SerializeField] DoorController[] doors;
         [Tooltip("Server: also runs when it fires (e.g. a cutscene's Play).")]
         [SerializeField] UnityEvent onActivated = new();
 
         readonly NetworkVariable<bool> activated = new();
 
         public bool IsActivated => activated.Value;
+
+        public override void OnNetworkSpawn()
+        {
+            activated.OnValueChanged += OnActivatedChanged;
+            if (activated.Value) OpenDoors();
+        }
+
+        public override void OnNetworkDespawn()
+        {
+            activated.OnValueChanged -= OnActivatedChanged;
+        }
+
+        void OnActivatedChanged(bool previous, bool current)
+        {
+            if (current) OpenDoors();
+        }
+
+        void OpenDoors()
+        {
+            if (doors == null) return;
+            foreach (var door in doors)
+                if (door != null) door.Open();
+        }
 
         void Update()
         {
