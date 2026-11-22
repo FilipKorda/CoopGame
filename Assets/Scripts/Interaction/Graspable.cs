@@ -277,8 +277,12 @@ namespace CoopGame
         {
             if (IsHeld)
             {
+                // Lift and steer swept apart: one diagonal sweep stalls both as soon as either hits something
+                // (pushing into a neighbour right after grabbing would stop it rising).
+                float rise = Mathf.Clamp(carryTargetY - transform.position.y, -moveSpeed * dt, moveSpeed * dt);
+                transform.position += Sweep(Vector3.up * rise);
                 Vector3 step = ClampToCarryRange(flatSteer * (moveSpeed * dt));
-                step.y = Mathf.Clamp(carryTargetY - transform.position.y, -moveSpeed * dt, moveSpeed * dt);
+                step.y = 0f;
                 transform.position += Sweep(step);
             }
             else if (onRelease == ReleaseBehaviour.ReturnToStart && (transform.position - slideStart).sqrMagnitude > 0.0001f)

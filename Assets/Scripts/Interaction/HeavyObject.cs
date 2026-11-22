@@ -17,10 +17,14 @@ namespace CoopGame
         [SerializeField] LayerMask collisionMask = ~0;
         [Tooltip("Mesh that shakes when someone tries to move it alone.")]
         [SerializeField] Transform shakeVisual;
+        [Tooltip("Lifted this much (metres) while every handle is held, so it can be carried onto things; 0 = slides along the ground.")]
+        [SerializeField] float carryLift;
 
         BoxCollider body;
         float fallSpeed;
         Vector3 shakeRestPosition;
+        bool lifted;
+        float liftTargetY;
 
         void Awake()
         {
@@ -45,7 +49,18 @@ namespace CoopGame
                 foreach (var handle in handles) steer += handle.SteerWorld;
                 steer /= handles.Length; // pulling against each other cancels out
                 transform.position += ObjectSweep.Sweep(body, transform, steer * (moveSpeed * dt), collisionMask);
+
+                if (carryLift > 0f)
+                {
+                    if (!lifted) liftTargetY = transform.position.y + carryLift;
+                    lifted = true;
+                    float rise = Mathf.Clamp(liftTargetY - transform.position.y, -moveSpeed * dt, moveSpeed * dt);
+                    transform.position += ObjectSweep.Sweep(body, transform, Vector3.up * rise, collisionMask);
+                    fallSpeed = 0f;
+                    return;
+                }
             }
+            lifted = false;
 
             fallSpeed += gravity * dt;
             Vector3 fall = ObjectSweep.Sweep(body, transform, Vector3.down * (fallSpeed * dt), collisionMask);

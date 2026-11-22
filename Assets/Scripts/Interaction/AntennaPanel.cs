@@ -18,6 +18,11 @@ namespace CoopGame
         [SerializeField] Color signalColor = new Color(0.35f, 1f, 0.55f);
         [SerializeField] Color noSignalColor = new Color(1f, 0.5f, 0.25f);
         [SerializeField] Color alignedColor = new Color(0.3f, 0.85f, 1f);
+        [Tooltip("Optional: the panel stays switched off (no angles shown) until this puzzle is solved.")]
+        [SerializeField] MazeRoomPuzzle requiredPuzzle;
+        [Tooltip("Optional: the same, for the statue map puzzle (Hidden Room 2).")]
+        [SerializeField] StatueMapPuzzle requiredMapPuzzle;
+        [SerializeField] Color lockedColor = new Color(1f, 0.3f, 0.25f);
 
         string text;
         Color color;
@@ -26,7 +31,17 @@ namespace CoopGame
         {
             if (antenna == null) return;
             string title = antenna.DisplayName.ToUpperInvariant();
-            if (antenna.IsAligned)
+            if (requiredPuzzle != null && !requiredPuzzle.IsSolved)
+            {
+                text = $"{title}\nPANEL ZABLOKOWANY\n{requiredPuzzle.ProgressText}";
+                color = lockedColor;
+            }
+            else if (requiredMapPuzzle != null && !requiredMapPuzzle.IsSolved)
+            {
+                text = $"{title}\nPANEL ZABLOKOWANY\n{requiredMapPuzzle.ProgressText}";
+                color = lockedColor;
+            }
+            else if (antenna.IsAligned)
             {
                 text = $"{title}\nUSTAWIONA\nsygnał połączony";
                 color = alignedColor;
