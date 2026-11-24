@@ -1,0 +1,749 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8914426724857158503
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c129214db42c734da4ca27044da2477, type: 3}
+  m_Name: DialogueClip
+  m_EditorClassIdentifier: Assembly-CSharp::CoopGame.DialogueClip
+  speaker: Kupiec
+  text: Tak! To jest moja melodia!
+  speakerColor: {r: 1, g: 0.85, b: 0.4, a: 1}
+--- !u!114 &-8823721619738916654
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05acc715f855ced458d76ee6f8ac6c61, type: 3}
+  m_Name: "Uj\u0119cia"
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineTrack
+  m_Version: 3
+  m_AnimClip: {fileID: 0}
+  m_Locked: 0
+  m_Muted: 0
+  m_CustomPlayableFullTypename: 
+  m_Curves: {fileID: 0}
+  m_Parent: {fileID: 11400000}
+  m_Children: []
+  m_Clips:
+  - m_Version: 1
+    m_Start: 0
+    m_ClipIn: 0
+    m_Asset: {fileID: 6678475627060431529}
+    m_Duration: 5.599999904632568
+    m_TimeScale: 1
+    m_ParentTrack: {fileID: -8823721619738916654}
+    m_EaseInDuration: 0
+    m_EaseOutDuration: 0
+    m_BlendInDuration: -1
+    m_BlendOutDuration: -1
+    m_MixInCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_MixOutCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_BlendInCurveMode: 0
+    m_BlendOutCurveMode: 0
+    m_ExposedParameterNames: []
+    m_AnimationCurves: {fileID: 0}
+    m_Recordable: 0
+    m_PostExtrapolationMode: 0
+    m_PreExtrapolationMode: 0
+    m_PostExtrapolationTime: 0
+    m_PreExtrapolationTime: 0
+    m_DisplayName: Cam_01_MachinePlays
+  - m_Version: 1
+    m_Start: 5.599999904632568
+    m_ClipIn: 0
+    m_Asset: {fileID: -3997941507760934235}
+    m_Duration: 5.400000095367432
+    m_TimeScale: 1
+    m_ParentTrack: {fileID: -8823721619738916654}
+    m_EaseInDuration: 0
+    m_EaseOutDuration: 0
+    m_BlendInDuration: -1
+    m_BlendOutDuration: -1
+    m_MixInCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_MixOutCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_BlendInCurveMode: 0
+    m_BlendOutCurveMode: 0
+    m_ExposedParameterNames: []
+    m_AnimationCurves: {fileID: 0}
+    m_Recordable: 0
+    m_PostExtrapolationMode: 0
+    m_PreExtrapolationMode: 0
+    m_PostExtrapolationTime: 0
+    m_PreExtrapolationTime: 0
+    m_DisplayName: Cam_02_MerchantAndMachine
+  m_Markers:
+    m_Objects: []
+  TrackPriority: 0
+--- !u!114 &-5055989808470091280
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb7b10566b8f2be4482cafc7962639af, type: 3}
+  m_Name: Cam_02_MerchantAndMachine
+  m_EditorClassIdentifier: Assembly-CSharp::CoopGame.CutsceneMoveTrack
+  m_Version: 3
+  m_AnimClip: {fileID: 0}
+  m_Locked: 0
+  m_Muted: 0
+  m_CustomPlayableFullTypename: 
+  m_Curves: {fileID: 0}
+  m_Parent: {fileID: 11400000}
+  m_Children: []
+  m_Clips:
+  - m_Version: 1
+    m_Start: 5.599999904632568
+    m_ClipIn: 0
+    m_Asset: {fileID: 5220963378280095960}
+    m_Duration: 5.400000095367432
+    m_TimeScale: 1
+    m_ParentTrack: {fileID: -5055989808470091280}
+    m_EaseInDuration: 0
+    m_EaseOutDuration: 0
+    m_BlendInDuration: -1
+    m_BlendOutDuration: -1
+    m_MixInCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_MixOutCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_BlendInCurveMode: 0
+    m_BlendOutCurveMode: 0
+    m_ExposedParameterNames: []
+    m_AnimationCurves: {fileID: 0}
+    m_Recordable: 0
+    m_PostExtrapolationMode: 0
+    m_PreExtrapolationMode: 0
+    m_PostExtrapolationTime: 0
+    m_PreExtrapolationTime: 0
+    m_DisplayName: Cam_02_MerchantAndMachine glides
+  m_Markers:
+    m_Objects: []
+--- !u!114 &-4550603053525083724
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb7b10566b8f2be4482cafc7962639af, type: 3}
+  m_Name: Cam_01_MachinePlays
+  m_EditorClassIdentifier: Assembly-CSharp::CoopGame.CutsceneMoveTrack
+  m_Version: 3
+  m_AnimClip: {fileID: 0}
+  m_Locked: 0
+  m_Muted: 0
+  m_CustomPlayableFullTypename: 
+  m_Curves: {fileID: 0}
+  m_Parent: {fileID: 11400000}
+  m_Children: []
+  m_Clips:
+  - m_Version: 1
+    m_Start: 0
+    m_ClipIn: 0
+    m_Asset: {fileID: 7767384718510117957}
+    m_Duration: 5.599999904632568
+    m_TimeScale: 1
+    m_ParentTrack: {fileID: -4550603053525083724}
+    m_EaseInDuration: 0
+    m_EaseOutDuration: 0
+    m_BlendInDuration: -1
+    m_BlendOutDuration: -1
+    m_MixInCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_MixOutCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_BlendInCurveMode: 0
+    m_BlendOutCurveMode: 0
+    m_ExposedParameterNames: []
+    m_AnimationCurves: {fileID: 0}
+    m_Recordable: 0
+    m_PostExtrapolationMode: 0
+    m_PreExtrapolationMode: 0
+    m_PostExtrapolationTime: 0
+    m_PreExtrapolationTime: 0
+    m_DisplayName: Cam_01_MachinePlays glides
+  m_Markers:
+    m_Objects: []
+--- !u!114 &-3997941507760934235
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90fb794a295e73545af71bcdb7375791, type: 3}
+  m_Name: CinemachineShot
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineShot
+  DisplayName: 
+  VirtualCamera:
+    exposedName: bf870cba240d034409ccd1107f138cb4
+    defaultValue: {fileID: 0}
+--- !u!114 &-981956691129800841
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a52ef9e67369f544830da1215812515, type: 3}
+  m_Name: Dialogi
+  m_EditorClassIdentifier: Assembly-CSharp::CoopGame.DialogueTrack
+  m_Version: 3
+  m_AnimClip: {fileID: 0}
+  m_Locked: 0
+  m_Muted: 0
+  m_CustomPlayableFullTypename: 
+  m_Curves: {fileID: 0}
+  m_Parent: {fileID: 11400000}
+  m_Children: []
+  m_Clips:
+  - m_Version: 1
+    m_Start: 0.5
+    m_ClipIn: 0
+    m_Asset: {fileID: 3681173543281960628}
+    m_Duration: 4.1
+    m_TimeScale: 1
+    m_ParentTrack: {fileID: -981956691129800841}
+    m_EaseInDuration: 0.2
+    m_EaseOutDuration: 0.2
+    m_BlendInDuration: -1
+    m_BlendOutDuration: -1
+    m_MixInCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_MixOutCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_BlendInCurveMode: 0
+    m_BlendOutCurveMode: 0
+    m_ExposedParameterNames: []
+    m_AnimationCurves: {fileID: 0}
+    m_Recordable: 0
+    m_PostExtrapolationMode: 0
+    m_PreExtrapolationMode: 0
+    m_PostExtrapolationTime: 0
+    m_PreExtrapolationTime: 0
+    m_DisplayName: "Kupiec: S\u0142uchajcie! S\u0142uchajcie tylko..."
+  - m_Version: 1
+    m_Start: 5.9
+    m_ClipIn: 0
+    m_Asset: {fileID: -8914426724857158503}
+    m_Duration: 2.6999999999999993
+    m_TimeScale: 1
+    m_ParentTrack: {fileID: -981956691129800841}
+    m_EaseInDuration: 0.2
+    m_EaseOutDuration: 0.2
+    m_BlendInDuration: -1
+    m_BlendOutDuration: -1
+    m_MixInCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_MixOutCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_BlendInCurveMode: 0
+    m_BlendOutCurveMode: 0
+    m_ExposedParameterNames: []
+    m_AnimationCurves: {fileID: 0}
+    m_Recordable: 0
+    m_PostExtrapolationMode: 0
+    m_PreExtrapolationMode: 0
+    m_PostExtrapolationTime: 0
+    m_PreExtrapolationTime: 0
+    m_DisplayName: 'Kupiec: Tak! To jest moja melodia!'
+  - m_Version: 1
+    m_Start: 8.8
+    m_ClipIn: 0
+    m_Asset: {fileID: 3761173916670416369}
+    m_Duration: 2.0999999999999996
+    m_TimeScale: 1
+    m_ParentTrack: {fileID: -981956691129800841}
+    m_EaseInDuration: 0.2
+    m_EaseOutDuration: 0.2
+    m_BlendInDuration: -1
+    m_BlendOutDuration: -1
+    m_MixInCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_MixOutCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_BlendInCurveMode: 0
+    m_BlendOutCurveMode: 0
+    m_ExposedParameterNames: []
+    m_AnimationCurves: {fileID: 0}
+    m_Recordable: 0
+    m_PostExtrapolationMode: 0
+    m_PreExtrapolationMode: 0
+    m_PostExtrapolationTime: 0
+    m_PreExtrapolationTime: 0
+    m_DisplayName: 'Kupiec: Dobrze... Porozmawiajmy o tym statku.'
+  m_Markers:
+    m_Objects: []
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfda56da833e2384a9677cd3c976a436, type: 3}
+  m_Name: A6_SoundMachine
+  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.TimelineAsset
+  m_Version: 0
+  m_Tracks:
+  - {fileID: -981956691129800841}
+  - {fileID: -8823721619738916654}
+  - {fileID: -4550603053525083724}
+  - {fileID: -5055989808470091280}
+  m_FixedDuration: 11
+  m_EditorSettings:
+    m_Framerate: 60
+    m_ScenePreview: 1
+  m_DurationMode: 1
+  m_MarkerTrack: {fileID: 0}
+--- !u!114 &3681173543281960628
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c129214db42c734da4ca27044da2477, type: 3}
+  m_Name: DialogueClip
+  m_EditorClassIdentifier: Assembly-CSharp::CoopGame.DialogueClip
+  speaker: Kupiec
+  text: "S\u0142uchajcie! S\u0142uchajcie tylko..."
+  speakerColor: {r: 1, g: 0.85, b: 0.4, a: 1}
+--- !u!114 &3761173916670416369
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c129214db42c734da4ca27044da2477, type: 3}
+  m_Name: DialogueClip
+  m_EditorClassIdentifier: Assembly-CSharp::CoopGame.DialogueClip
+  speaker: Kupiec
+  text: Dobrze... Porozmawiajmy o tym statku.
+  speakerColor: {r: 1, g: 0.85, b: 0.4, a: 1}
+--- !u!114 &5220963378280095960
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23d085278aa893c48882fc90a8c21ca6, type: 3}
+  m_Name: CutsceneMoveClip
+  m_EditorClassIdentifier: Assembly-CSharp::CoopGame.CutsceneMoveClip
+  from:
+    exposedName: dfa64f5e624f299418b67dd3c882ace7
+    defaultValue: {fileID: 0}
+  to:
+    exposedName: 7824daa8602e0af47b6bfe548edc353a
+    defaultValue: {fileID: 0}
+  startOffset: {x: 0, y: 0, z: 0}
+  endOffset: {x: 0, y: 0, z: 0}
+  curveThrough:
+    exposedName: 
+    defaultValue: {fileID: 0}
+  fixedHeight: 0
+  height: 0
+  easing: 0
+  arcHeight: 0
+  stepBob: 0
+  stepLength: 0.75
+  tumble: 0
+  facing: 3
+  lookAt:
+    exposedName: 
+    defaultValue: {fileID: 0}
+  turnTime: 0.35
+--- !u!114 &6678475627060431529
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90fb794a295e73545af71bcdb7375791, type: 3}
+  m_Name: CinemachineShot
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineShot
+  DisplayName: 
+  VirtualCamera:
+    exposedName: 505ac099e4aa13947b2ab2876dca5bbe
+    defaultValue: {fileID: 0}
+--- !u!114 &7767384718510117957
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23d085278aa893c48882fc90a8c21ca6, type: 3}
+  m_Name: CutsceneMoveClip
+  m_EditorClassIdentifier: Assembly-CSharp::CoopGame.CutsceneMoveClip
+  from:
+    exposedName: 5edbc960d32468040b483d0d8c831bba
+    defaultValue: {fileID: 0}
+  to:
+    exposedName: 5d08fa2160d08cb4f9263a7ac3fe041a
+    defaultValue: {fileID: 0}
+  startOffset: {x: 0, y: 0, z: 0}
+  endOffset: {x: 0, y: 0, z: 0}
+  curveThrough:
+    exposedName: 
+    defaultValue: {fileID: 0}
+  fixedHeight: 0
+  height: 0
+  easing: 0
+  arcHeight: 0
+  stepBob: 0
+  stepLength: 0.75
+  tumble: 0
+  facing: 3
+  lookAt:
+    exposedName: 
+    defaultValue: {fileID: 0}
+  turnTime: 0.35
