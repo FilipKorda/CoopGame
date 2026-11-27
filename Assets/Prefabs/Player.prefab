@@ -2405,7 +2405,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CoopGame.PlayerMovement
   ShowTopMostFoldoutHeaderGroup: 1
   moveSpeed: 7
-  crouchSpeed: 4
   groundAcceleration: 60
   groundDeceleration: 70
   airAcceleration: 25
@@ -2550,7 +2549,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CoopGame.PlayerPose
   visualRoot: {fileID: 2495388658182634420}
-  crouchScale: 0.6
   blendSpeed: 4
   downedTilt: 90
   downedLift: 0.45
@@ -9279,7 +9277,7 @@ MonoBehaviour:
   groundCheck: 0.25
   groundLayers:
     serializedVersion: 2
-    m_Bits: 4294967291
+    m_Bits: 51
   pushOffSpeed: 9
   tuckSpeed: 3
   reachSpeed: -6

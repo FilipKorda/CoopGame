@@ -143,6 +143,18 @@ namespace CoopGame
 
         int[] MelodySlots() => (int[])melody.Clone();
 
+        /// <summary>
+        /// Every machine, nothing networked: blow the merchant's melody through the pipes after
+        /// <paramref name="delay"/> seconds (the cutscene that shows the solved machine calls it when it starts).
+        /// </summary>
+        public void PlayMelodyLocal(float delay) => StartCoroutine(PlayMelodyLater(delay));
+
+        IEnumerator PlayMelodyLater(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            yield return Play(MelodySlots(), false);
+        }
+
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         void BuyRpc(RpcParams rpcParams = default)
         {

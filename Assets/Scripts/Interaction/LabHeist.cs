@@ -52,6 +52,13 @@ namespace CoopGame
         [SerializeField] Transform[] codeButtons = new Transform[0];
         [SerializeField] float buttonDepth = 0.08f;
 
+        [Header("Code hint")]
+        [Tooltip("Wall button by the dome symbols (a Graspable, caught with the wrench beam like the panel buttons): uncovers the hint panel at the monitoring console, once for good. Pushed in along its local +z.")]
+        [SerializeField] Transform hintButton;
+        [Tooltip("Shutter leaves over the hint panel: the first slides along its parent's -x, the second along +x.")]
+        [SerializeField] Transform[] hintLeaves = new Transform[0];
+        [SerializeField] float hintSlide = 0.8f;
+
         [SerializeField] float moveSpeed = 3f;
 
         public UnityEvent onMapTakenServer = new();
@@ -62,10 +69,12 @@ namespace CoopGame
         readonly NetworkVariable<byte> codeProgress = new();
         readonly NetworkVariable<bool> domeOpen = new();
         readonly NetworkVariable<bool> mapTaken = new();
+        readonly NetworkVariable<bool> hintOpen = new();
 
-        Vector3 ventRest, domeRest; Vector3[] doorRest;
+        Vector3 ventRest, domeRest, hintButtonRest; Vector3[] doorRest, leafRest;
         InputAction interactAction;
         bool nearPanel, nearMap;
+        Graspable hintGrip; Targetable hintTarget;
         int aimedButton = -1;
         Vector3[] buttonRest; float[] pressedAt = new float[0];
         Graspable[] grips; bool[] gripHeld;
@@ -78,6 +87,7 @@ namespace CoopGame
         public int CodeProgress => codeProgress.Value;
         public bool DomeOpen => domeOpen.Value;
         public bool MapTaken => mapTaken.Value;
+        public bool HintOpen => hintOpen.Value;
 
         void Awake()
         {
@@ -85,6 +95,9 @@ namespace CoopGame
             if (dome != null) domeRest = dome.position;
             doorRest = new Vector3[doors != null ? doors.Length : 0];
             for (int i = 0; i < doorRest.Length; i++) if (doors[i] != null) doorRest[i] = doors[i].position;
+            if (hintButton != null) { hintButtonRest = hintButton.localPosition; hintGrip = hintButton.GetComponent<Graspable>(); hintTarget = hintButton.GetComponent<Targetable>(); }
+            leafRest = new Vector3[hintLeaves != null ? hintLeaves.Length : 0];
+            for (int i = 0; i < leafRest.Length; i++) if (hintLeaves[i] != null) leafRest[i] = hintLeaves[i].localPosition;
         }
 
         public override void OnNetworkSpawn()
@@ -127,6 +140,7 @@ namespace CoopGame
             if (operatorPresent.Value != present) operatorPresent.Value = present;
             if (inVent && !ventLocked.Value) { ventLocked.Value = true; SayRpc("Wentylacja zatrzasnęła się za wami na stałe!"); }
             ServerButtons();
+            if (hintGrip != null && hintGrip.IsHeld) { ServerOpenHint(); hintGrip.ServerForceRelease(); }
         }
 
         // A panel button is pressed by catching it with the wrench beam: the moment the beam latches on it counts
@@ -197,6 +211,14 @@ namespace CoopGame
             return true;
         }
 
+        /// <summary>Server: uncover the code hint at the monitoring console (once).</summary>
+        public void ServerOpenHint()
+        {
+            if (hintOpen.Value) return;
+            hintOpen.Value = true;
+            SayRpc("Przy konsoli operatora odsłonił się panel ze wskazówką.");
+        }
+
         [Rpc(SendTo.Everyone)]
         void SayRpc(string text) { message = text; messageUntil = Time.time + 4.5f; }
 
@@ -209,6 +231,10 @@ namespace CoopGame
             for (int i = 0; i < doorRest.Length; i++)
                 if (doors[i] != null) doors[i].position = Vector3.MoveTowards(doors[i].position, doorRest[i] + Vector3.up * (doorSymbols[i] == openSymbol.Value ? doorLift : 0f), step);
             if (dome != null) dome.position = Vector3.MoveTowards(dome.position, domeRest + Vector3.up * (domeOpen.Value ? domeLift : 0f), step * 0.5f);
+            if (hintTarget != null && hintTarget.enabled == hintOpen.Value) hintTarget.enabled = !hintOpen.Value;     // no beam once it has done its job
+            if (hintButton != null) hintButton.localPosition = Vector3.MoveTowards(hintButton.localPosition, hintButtonRest + hintButton.localRotation * Vector3.forward * (hintOpen.Value ? 0.025f : 0f), dt * 0.2f);
+            for (int i = 0; i < leafRest.Length; i++)
+                if (hintLeaves[i] != null) hintLeaves[i].localPosition = Vector3.MoveTowards(hintLeaves[i].localPosition, leafRest[i] + Vector3.right * ((i % 2 == 0 ? -1f : 1f) * (hintOpen.Value ? hintSlide : 0f)), step * 0.25f);
         }
 
         void LocalInput()
@@ -299,6 +325,11 @@ namespace CoopGame
         public void SetupButtons(Transform[] doorPanelButtons, Transform[] codePanelButtons)
         {
             doorButtons = doorPanelButtons; codeButtons = codePanelButtons;
+        }
+
+        public void SetupHint(Transform button, Transform[] leaves)
+        {
+            hintButton = button; hintLeaves = leaves;
         }
     }
 }

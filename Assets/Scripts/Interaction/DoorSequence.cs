@@ -22,7 +22,15 @@ namespace CoopGame
 
         public override void OnNetworkSpawn()
         {
+            // Clients open the doors too when the server opens them (ServerOpen runs only on the server).
+            opened.OnValueChanged += OnOpenedChanged;
             if (opened.Value)
+                sequenceCoroutine = StartCoroutine(OpenSequence());
+        }
+
+        void OnOpenedChanged(bool was, bool now)
+        {
+            if (now && sequenceCoroutine == null)
                 sequenceCoroutine = StartCoroutine(OpenSequence());
         }
 
@@ -65,6 +73,7 @@ namespace CoopGame
 
         public override void OnNetworkDespawn()
         {
+            opened.OnValueChanged -= OnOpenedChanged;
             if (sequenceCoroutine != null)
             {
                 StopCoroutine(sequenceCoroutine);
